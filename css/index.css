@@ -1,0 +1,243 @@
+html, body {
+    background-color: #D5E8EB;
+    height: 100%; 
+    margin: 0;
+    overflow: hidden;    
+}
+
+#mapid {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    bottom: 0px;
+}
+
+.selectBox {
+    background: rgba(244, 244, 244,0.8);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    padding: 5px;
+    min-width: 246px;      
+}
+
+p {
+    font-family: 'Viga', sans-serif;
+    font-size: 1.5em;
+    font-weight: 400;
+    line-height: 1.5em;
+    color: darkslategrey;
+    margin-block-start: 0em;
+    margin-block-end: 0em;
+}
+
+#country-select {
+    border: 2px solid rgba(0,0,0,0.2);
+    font-size: 0.8rem;
+    border-radius: 4px;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f4f4;
+    margin-top: 5px;
+}
+
+.info, .weatherBox {
+    position: relative;
+    font: 14px/16px 'Roboto', sans-serif;
+    background: rgba(244, 244, 244,0.8);
+    min-height: 61px;
+    min-width: 61px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    padding: 2px;
+}
+
+#infoBox {
+    width: 61px;
+    height: 61px;
+    float: right;
+    clear: left;
+    position: relative;
+    background-color: #D5E8EB;
+}
+
+#flag {
+    opacity: 0.5;
+    max-width: 100%;
+    max-height: 100%;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+}
+
+#countryTemp {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-weight: bold;
+    font-size: 0.8em;    
+}
+
+#wImg {
+    opacity: 0.8;
+    float: right;
+    width: 59px;
+    height: 59px;
+    border: 1px solid lightgrey;
+    background-color: #D5E8EB;
+}
+
+summary {
+    top: 0;
+    min-width: 61px;
+ }
+
+details[open] {
+    width: 200px;
+    height: auto
+}
+
+details > summary {
+    list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+    display: none;
+ }
+
+.leaflet-control-zoom {
+    display: none;
+}
+
+#routesLeg {
+    border: 1px solid lightgray;
+    border-radius: 4px;
+ }
+
+.leaflet-horizontalcenter {
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+    width: 100%;
+    left: 50%;
+    transform: translateX(-50%); 
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+.leaflet-horizontalcenter .leaflet-control {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+@media screen and (min-width: 307px) {
+    .leaflet-bottom.leaflet-left {
+        bottom: 0;
+    }
+}
+
+@media screen and (min-width: 382px) {
+    p {
+        font-size: 1.8em;
+    }
+    .leaflet-top.leaflet-right {
+        top: 88px;
+    }
+    .leaflet-top.leaflet-left {
+        top: 88px;
+    }
+}
+
+@media screen and (min-width: 512px) {
+    .leaflet-top.leaflet-right {
+        top: 56px;
+    }
+    .leaflet-top.leaflet-left {
+        top: 56px;
+    }
+}
+
+@media screen and (min-width: 565px) {
+    .leaflet-top.leaflet-right {
+        top: 0;
+    }
+    .leaflet-top.leaflet-left {
+        top: 56px;
+    }
+}
+
+@media screen and (min-width: 750px) {
+    p {
+        font-size: 2em;
+    }
+    .leaflet-top.leaflet-left {
+        top: 60px;
+    }
+}
+
+@media screen and (min-width: 1000px) {
+    p {
+        font-size: 2.5em;
+    }
+    .leaflet-top.leaflet-left {
+        top: 69px;
+    }
+}
+
+@media screen and (orientation: landscape) and (max-height: 600px) {
+    .leaflet-control {
+        margin-top: 5px !important;
+    }
+    #infoBox {
+        height: 30px !important;
+        text-align: center;
+    }
+    #flag {
+        position: relative;
+    }
+    #wImg {
+        height: 28px;
+        width: auto;
+        padding-right: 31px;
+    }
+    .info, .weatherBox {
+        min-height: 30px;
+        font: 12px/14px 'Roboto', sans-serif;
+    }
+    #countryTemp {
+        top: 7px;
+        right: 8px;
+    }
+    .leaflet-top.leaflet-left {
+        top: 51px;
+    }
+}
+
+@media screen and (orientation: landscape) and (min-height: 317px) and (max-height: 350px) {
+    .leaflet-touch .leaflet-bar button {
+        width: 36px;
+        height: 36px;
+        line-height: 36px;
+    }
+}
+
+@media screen and (orientation: landscape) and (min-height: 350px) {
+    .leaflet-touch .leaflet-bar button {
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+    }
+}
+
+@media screen and (orientation: landscape) and (max-height: 600px) and (min-width: 750px) {
+    .leaflet-top.leaflet-left {
+            top: 55px;
+    }
+}
+
+@media screen and (orientation: landscape) and (max-height: 600px) and (min-width: 1000px) {
+    .leaflet-top.leaflet-left {
+            top: 64px;
+    }
+}
+
+
