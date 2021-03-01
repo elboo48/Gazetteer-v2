@@ -428,19 +428,22 @@
 }
 
 .leaflet-control-layers-toggle {
-    background-image: url(images/weather.png);
+    background-image: url(images/layers-2x.png);
     width: 36px;
     height: 36px;
 }
 
 .leaflet-retina .leaflet-control-layers-toggle {
-    background-image: url(images/weather-2x.png);
+    background-image: url(images/layers-2x.png);
     background-size: 26px 26px;
 }
 
 .leaflet-touch .leaflet-control-layers-toggle {
-    width: 30px;
-    height: 30px;
+    width: 52px;
+    height: 52px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    background-color: rgba(244, 244, 244,0.8);
 }
 
 .leaflet-control-layers .leaflet-control-layers-list,

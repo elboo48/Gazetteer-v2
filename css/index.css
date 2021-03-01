@@ -13,12 +13,8 @@ html, body {
 }
 
 .selectBox {
-    background: rgba(244, 244, 244,0.8);
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    padding: 5px;
-    min-width: 246px;      
-}
+    background: transparent;
+ }
 
 p {
     font-family: 'Viga', sans-serif;
@@ -32,12 +28,11 @@ p {
 
 #country-select {
     border: 2px solid rgba(0,0,0,0.2);
-    font-size: 0.8rem;
+    font-size: 1rem;
     border-radius: 4px;
     font-family: 'Roboto', sans-serif;
     background-color: #f4f4f4;
-    margin-top: 5px;
-}
+ }
 
 .info, .weatherBox {
     position: relative;
@@ -117,7 +112,6 @@ details > summary::-webkit-details-marker {
     position: absolute;
     z-index: 1000;
     pointer-events: none;
-    width: 100%;
     left: 50%;
     transform: translateX(-50%); 
     padding-right: 10px;

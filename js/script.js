@@ -166,7 +166,7 @@ selectBox.onAdd = function (map) {
 	return this._div;
 };
 selectBox.update = function (x) {
-	this._div.innerHTML = '<p>Where will you explore today?  <select id="country-select" name="country"><option selected value="">Pick a country</option></select></p >'
+	this._div.innerHTML = '<select id="country-select" name="country"><option selected value="">Pick a country</option></select></p >'
 };
 selectBox.addTo(map);
 
@@ -177,25 +177,13 @@ let temp = L.OWM.temperature({ showLegend: true, opacity: 0.5, appId: '1d748ca6a
 
 // create select button and populate from json file
 let jsonData = $.ajax({
-    url: "php/getBorders.php",
+    url: "php/getSelect.php",
     dataType: "json",
     async: false
 }).responseText;
 let jArr = JSON.parse(jsonData);
-let featureObj = {};
-for (let i = 0; i < jArr.features.length; i++) {
-	let key =  jArr.features[i].properties.name;
-	let value = jArr.features[i].properties.iso_a2; 
-	featureObj[key] = value; 
-}
-const ordered = Object.keys(featureObj).sort().reduce(
-    (obj, key) => {
-        obj[key] = featureObj[key];
-        return obj;
-    }, {}
-);
 let ele = document.getElementById('country-select');
-for (const [key, value] of Object.entries(ordered)) {
+for (const [key, value] of Object.entries(jArr)) {
 	ele.innerHTML = ele.innerHTML + '<option value="' + value + '">' + key + '</option>';
 }
 
@@ -225,39 +213,53 @@ function errorCallback(e) {
 if (navigator.geolocation) {
 	navigator.geolocation.getCurrentPosition(usePosition, errorCallback, { timeout: 30000, enableHighAccuracy: true, maximumAge: 75000 });
 }
+let cityCluster;
+let airportCluster;
+let musCluster;
+let uniCluster;
+let hospCluster;
+let libCluster;
 
 // select event leading to API calls and map shift
 $('#country-select').on('change', function () {
-
-	// remove previous select event
-	$('.leaflet-interactive.remove-markers-active').click();
+	//NEED TO REVIEW FOR REDUNDANT 
+	$('.leaflet-control-layers-selector').prop('checked', false); 
+	$('.leaflet-control-layers-toggle').remove();
+	$('div.leaflet-pane.leaflet-map-pane.div.leaflet-pane.leaflet-marker-pane').empty();
 	$('path.leaflet-interactive').remove();
-	$('.leaflet-pane.leaflet-marker-pane').empty();
+	$('div.leaflet-pane.leaflet-marker-pane').empty();
 	$('.info.leaflet-control').remove();
 	$('.weatherBox.leaflet-control').remove();
-	$('#cities-marker-toggle').parent().remove();
+	$('div.beautify-marker').parent().remove();
 	$('#airports-marker-toggle').parent().remove();
 	$('#lib-marker-toggle').parent().remove();
+	$('div.leaflet-control-layers.leaflet-control').remove();
+	
 	let toggleArray = [];
-
+	let cities;
 	// map draw boundary and shuffle using bounds
-	for (let i = 0; i < jArr.features.length; i++) {
-		if (jArr.features[i].properties.iso_a2 === this.value) {
-			let countryBoundary = jArr.features[i].geometry;
-			let bounds = new L.geoJSON(countryBoundary, {
-				style: {
-					fillColor: "#8935e8",
-					weight: 2,
-					opacity: 1,
-					color: 'white',
-					dashArray: '3',
-					fillOpacity: 0.1
-				}
-			}).addTo(map);
-			bounds = bounds.getBounds();
-			map.flyToBounds(bounds); 
-		};
-	};
+
+	let jsonBoundsData = $.ajax({
+		url: "php/getBorders.php",
+		dataType: "json",
+		async: false,
+		data: {
+			cc: this.value,
+		},
+	}).responseText;
+	let jBoundsArr = JSON.parse(jsonBoundsData);
+	let bounds = new L.geoJSON(jBoundsArr, {
+		style: {
+			fillColor: "#8935e8",
+			weight: 2,
+			opacity: 1,
+			color: 'white',
+			dashArray: '3',
+			fillOpacity: 0.1
+		}
+		}).addTo(map);
+	bounds = bounds.getBounds();
+	map.flyToBounds(bounds); 
 
 	// draw country information box and populate
 	let info = L.control({ position: 'topleft' });
@@ -364,9 +366,8 @@ $('#country-select').on('change', function () {
 		return Object.keys(object).find(key =>
 			object[key] === value);
 	}
-	countryKey = getKeyByValue(ordered, this.value);
+	countryKey = getKeyByValue(jArr, this.value);
 	let encCountryKey = encodeURIComponent(countryKey)
-
 	// ipgeolocation astronomy API call for daylight info
 	$.ajax({
 		url: "php/getAstronomy.php",
@@ -490,6 +491,9 @@ $('#country-select').on('change', function () {
 			}
 		};
 		$.ajax(settings).done(function (response) {
+			if (cityCluster) {
+				map.removeLayer(cityCluster);
+			}
 			for (i = 0; i < response.cities.length; i++) {
 				// create city markers and put in array
 				let content = $('<div id="wiki" />');
@@ -536,111 +540,80 @@ $('#country-select').on('change', function () {
 				cityArray.push(obj);
 			} 
 			// creat cities cluster layer and put into easy button
-			let cities = new L.layerGroup(cityArray);
-			let cityCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+			cities = new L.layerGroup(cityArray);
+			cityCluster = L.markerClusterGroup({ showCoverageOnHover: false });
 			cityCluster.addLayer(cities);
-			let citiesToggle = L.easyButton({
-				id: 'cities-marker-toggle',
-				states: [{
-					stateName: 'add-markers',
-					icon: 'fas fa-city',
-					title: 'Add cities',
-					onClick: function (control) {
-						map.addLayer(cityCluster);
-						control.state('remove-markers');
-					}
-				}, {
-					stateName: 'remove-markers',
-					title: 'Remove cities',
-					icon: 'fas fa-undo-alt',
-					onClick: function (control) {
-						map.removeLayer(cityCluster);
-						control.state('add-markers');
-					}
-				}]
-			});
-			addToBar(citiesToggle);
+			cityCluster.addTo(map);
+			addToBar(cityCluster, 'cityCluster');
 			resolve('foo');
 		});	
 	});
 
 	// major airports json and Wiki airports info API on popup click
+	if (airportCluster) {
+		map.removeLayer(airportCluster);
+	}
 	let airportData = $.ajax({
 		url: "php/getAirports.php",
 		dataType: "json",
-		async: false
+		async: false,
+		data: {
+			cc: this.value,
+		},
 	}).responseText;
 	let airports = JSON.parse(airportData)
 	let airportArray = [];
 	for (let i = 0; i < airports.length; i++) {
-		if (airports[i].iso_country == this.value) {
-			// create airport markers
-			let coordArr = airports[i].coordinates.split(',');
-			let content = $('<div id="airport" />');
-			content.html(
-				'<div id="logoImg"/></div><b id="airportURL">' + airports[i].name + '</b><span id="passengers"></span>');
-			let obj = L.marker([coordArr[1], coordArr[0]], {
-				icon: L.BeautifyIcon.icon({
-					icon: 'fas fa-plane',
-					borderColor: 'rgba(255,255,255, 0.4)',
-					backgroundColor: 'rgba(78,65,135,1)',
-					textColor: 'rgba(255,255,255, 1)'
-				})
+		// create airport markers
+		let coordArr = airports[i].coordinates.split(',');
+		let content = $('<div id="airport" />');
+		content.html(
+			'<div id="logoImg"/></div><b id="airportURL">' + airports[i].name + '</b><span id="passengers"></span>');
+		let obj = L.marker([coordArr[1], coordArr[0]], {
+			icon: L.BeautifyIcon.icon({
+				icon: 'fas fa-plane',
+				borderColor: 'rgba(255,255,255, 0.4)',
+				backgroundColor: 'rgba(78,65,135,1)',
+				textColor: 'rgba(255,255,255, 1)'
 			})
-				.bindPopup(content[0], {
-					maxWidth: "300px"
-				})
-			.on('click', onAirportClick)
-			// Airport details
-			function onAirportClick(e) {
-			const findAirportDetails = {
-					"async": true,
-					"crossDomain": true,
-				"url": "https://wikiapi.p.rapidapi.com/API/v1/wiki/engineering/civil/airport/info/" + airports[i]['iata_code'] + "?lan=en",
-					"method": "GET",
-					"headers": {
-						"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
-						"x-rapidapi-host": "wikiapi.p.rapidapi.com"
-					}
-				};
-				$.ajax(findAirportDetails).done(function (response) {
-					$('#airportURL').wrap('<a href="https://' + response.website + '" target= _blank >');
-					$('#passengers').html('<br>Passengers: ' + response.passengers);
-					if (response.logo_img) {
-						$('#logoImg').prepend('<img id="logoImg" src="' + response.logo_img + '" alt="airport logo" style="width:100%">');
-						$('#logoImg').css({ "display": "block", "opacity": "1", "object-fit": "cover", });
-					}
-				});
-				} 
-			airportArray.push(obj);
-		}	
-	}
+		})
+		.bindPopup(content[0], {
+			maxWidth: "300px"
+		})
+		.on('click', onAirportClick);
+		// Airport details
+		function onAirportClick(e) {
+		const findAirportDetails = {
+				"async": true,
+				"crossDomain": true,
+			"url": "https://wikiapi.p.rapidapi.com/api/v1/wiki/engineering/civil/airport/info/" + airports[i]['iata_code'] + "?lan=en",
+				"method": "GET",
+				"headers": {
+					"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
+					"x-rapidapi-host": "wikiapi.p.rapidapi.com"
+				}
+			};
+		$.ajax(findAirportDetails).done(function (response) {
+			$('#airportURL').wrap('<a href="https://' + response.website + '" target= _blank >');
+			$('#passengers').html('<br>Passengers: ' + response.passengers);
+			if (response.logo_img) {
+				$('#logoImg').prepend('<img id="logoImg" src="' + response.logo_img + '" alt="airport logo" style="width:100%">');
+				$('#logoImg').css({ "display": "block", "opacity": "1", "object-fit": "cover", });
+			}
+		});
+		} 
+		airportArray.push(obj);
+	}	
 	let airportsLayer = new L.layerGroup(airportArray); 
-	let airportCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+	airportCluster = L.markerClusterGroup({ showCoverageOnHover: false });
 	airportCluster.addLayer(airportsLayer);
-	airportsToggle = L.easyButton({
-		id: 'airports-marker-toggle',
-		states: [{
-			stateName: 'add-markers',
-			icon: 'fas fa-plane',
-			title: 'Add airports',
-			onClick: function (control) {
-					map.addLayer(airportCluster);
-					control.state('remove-markers');
-				}
-		}, {
-			stateName: 'remove-markers',
-			title: 'Remove airports',
-			icon: 'fas fa-undo-alt',
-			onClick: function (control) {
-					map.removeLayer(airportCluster);
-					control.state('add-markers');
-				}
-			}]
-		}); 
-	toggleArray.push(airportsToggle); 
+	airportCluster.addTo(map);
+	addToBar(airportCluster, 'airportCluster');
 
 	// Geonames API search libraries and Wiki API search on popup click 
+	if (libCluster) {
+		map.removeLayer(libCluster);
+	}
 	let libArray = [];
 	let libPromise = new Promise((resolve, reject) => {
 		$.ajax({
@@ -701,29 +674,10 @@ $('#country-select').on('change', function () {
 						libArray.push(obj);
 					}
 					let libLayer = new L.layerGroup(libArray);
-					let libCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+					libCluster = L.markerClusterGroup({ showCoverageOnHover: false });
 					libCluster.addLayer(libLayer);
-					libToggle = L.easyButton({
-					id: 'lib-marker-toggle',
-					states: [{
-						stateName: 'add-markers',
-						icon: 'fas fa-book',
-						title: 'Add libraries',
-						onClick: function (control) {
-							map.addLayer(libCluster);
-							control.state('remove-markers');
-						}
-					}, {
-						stateName: 'remove-markers',
-						title: 'Remove libraries',
-						icon: 'fas fa-undo-alt',
-						onClick: function (control) {
-							map.removeLayer(libCluster);
-							control.state('add-markers');
-						}
-							}]
-					});
-					addToBar(libToggle);
+					addToBar(libCluster, 'libCluster');
+					libCluster.addTo(map);
 					resolve('foo');
 				}			
 			},
@@ -734,6 +688,9 @@ $('#country-select').on('change', function () {
 	});
 
 	// Geonames API search hospitals and Wiki API search on popup click
+	if (hospCluster) {
+		map.removeLayer(hospCluster);
+	}
 	let hospArray = [];
 	let hospPromise = new Promise((resolve, reject) => {
 		$.ajax({
@@ -793,29 +750,10 @@ $('#country-select').on('change', function () {
 						hospArray.push(obj);
 					}
 					let hospLayer = new L.layerGroup(hospArray);
-					let hospCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+					hospCluster = L.markerClusterGroup({ showCoverageOnHover: false });
 					hospCluster.addLayer(hospLayer);
-					hospToggle = L.easyButton({
-						id: 'hosp-marker-toggle',
-						states: [{
-							stateName: 'add-markers',
-							icon: 'fas fa-hospital-alt',
-							title: 'Add hospitals',
-							onClick: function (control) {
-								map.addLayer(hospCluster);
-								control.state('remove-markers');
-							}
-						}, {
-							stateName: 'remove-markers',
-							title: 'Remove hospitals',
-							icon: 'fas fa-undo-alt',
-							onClick: function (control) {
-								map.removeLayer(hospCluster);
-								control.state('add-markers');
-							}
-						}]
-					});
-					addToBar(hospToggle);
+					addToBar(hospCluster, 'hospCluster');
+					hospCluster.addTo(map);
 					resolve('foo');
 				}
 			},
@@ -826,6 +764,9 @@ $('#country-select').on('change', function () {
 	});
 
 	// Geonames API search museums and Wiki API search on popup click 
+	if (musCluster) {
+		map.removeLayer(musCluster);
+	}
 	let musArray = [];
 	let musPromise = new Promise((resolve, reject) => {
 		$.ajax({
@@ -885,29 +826,10 @@ $('#country-select').on('change', function () {
 						musArray.push(obj);
 					}
 					let musLayer = new L.layerGroup(musArray);
-					let musCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+					musCluster = L.markerClusterGroup({ showCoverageOnHover: false });
 					musCluster.addLayer(musLayer);
-					musToggle = L.easyButton({
-						id: 'mus-marker-toggle',
-						states: [{
-							stateName: 'add-markers',
-							icon: 'fas fa-landmark',
-							title: 'Add museums',
-							onClick: function (control) {
-								map.addLayer(musCluster);
-								control.state('remove-markers');
-							}
-						}, {
-							stateName: 'remove-markers',
-							title: 'Remove museums',
-							icon: 'fas fa-undo-alt',
-							onClick: function (control) {
-								map.removeLayer(musCluster);
-								control.state('add-markers');
-							}
-						}]
-					});
-					addToBar(musToggle);
+					addToBar(musCluster, 'musCluster');
+					musCluster.addTo(map);
 					resolve('foo');
 				}
 			},
@@ -918,6 +840,9 @@ $('#country-select').on('change', function () {
 	});
 
 	// Geonames API search universiities and Wiki API search on popup click
+	if (uniCluster) {
+		map.removeLayer(uniCluster);
+	}
 	let uniArray = [];
 	let uniPromise = new Promise((resolve, reject) => {
 		$.ajax({
@@ -977,29 +902,10 @@ $('#country-select').on('change', function () {
 						uniArray.push(obj);
 					};
 					let uniLayer = new L.layerGroup(uniArray);
-					let uniCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+					uniCluster = L.markerClusterGroup({ showCoverageOnHover: false });
 					uniCluster.addLayer(uniLayer);
-					uniToggle = L.easyButton({
-						id: 'uni-marker-toggle',
-						states: [{
-							stateName: 'add-markers',
-							icon: 'fas fa-school',
-							title: 'Add universities',
-							onClick: function (control) {
-								map.addLayer(uniCluster);
-								control.state('remove-markers');
-							}
-						}, {
-							stateName: 'remove-markers',
-							title: 'Remove universities',
-							icon: 'fas fa-undo-alt',
-							onClick: function (control) {
-								map.removeLayer(uniCluster);
-								control.state('add-markers');
-							}
-						}]
-					});
-					addToBar(uniToggle);
+					addToBar(uniCluster, "uniCluster");
+					uniCluster.addTo(map);
 					resolve('foo');
 				};
 			},
@@ -1010,14 +916,56 @@ $('#country-select').on('change', function () {
 	});
 
 	// function to add buttons to array (escape scope)
-	function addToBar(x) {
-		toggleArray.push(x);
+	function addToBar(x, y) {
+		toggleArray[y] = x;
 	}
 
 	// once all buttons completed, add to a bar and display on map
 	Promise.all([libPromise, citiesPromise, hospPromise, musPromise, uniPromise]).then((values) => {
-		let bar = trailsArr.concat(toggleArray);
-		let selectBar = L.easyBar(bar);
-		selectBar.addTo(map);		
+		//let bar = trailsArr.concat(toggleArray);
+		//let selectBar = L.easyBar(bar);
+		//selectBar.addTo(map);
+		let overlayMaps = {
+			"<span class='city-layer-item'>Major cities</span>": toggleArray['cityCluster'],
+			"<span class='hiking-layer-item'>Hiking trails</span>": hikingLayer,
+			"Cycling trails": cyclingLayer,
+			"<span class='clouds-layer-item'>Clouds</span>": clouds,
+			"Rain": rain,
+			"Temperature": temp,
+			"<span class='unis-layer-item'>Univerisities</span>": toggleArray['uniCluster'],
+			"Hospitals": toggleArray['hospCluster'], 
+			"Libraries": toggleArray['libCluster'],
+			"Museums": toggleArray['musCluster'],
+			"Airports": toggleArray['airportCluster'],
+		};
+		let overlays = L.control.layers({}, overlayMaps).addTo(map);
+		$('.leaflet-control-layers-list').prepend('<b><u>Map overlays</u></b>');
+		$('.city-layer-item').parent().parent().prepend('<b>Places:</b><br>');
+		$('.hiking-layer-item').parent().parent().prepend('<b>Routes:</b><br>');
+		$('.clouds-layer-item').parent().parent().prepend('<b>Weather:</b><br>');
+		$('.unis-layer-item').parent().parent().prepend('<b>Amenities:</b><br>');
+
 	});	
+
 });
+
+// create a div to hold all the checkboxes for layers. on click it turns into a bigger fixed size div... just like ore try to amend html of leaflet-control-layers-expanded
+
+
+
+
+/*   
+ *   
+ *   
+ *   
+let selectBox = L.control({ position: 'tophorizontalcenter' });
+selectBox.onAdd = function (map) {
+	this._div = L.DomUtil.create('div', 'selectBox');
+	this.update();
+	return this._div;
+};
+selectBox.update = function (x) {
+	this._div.innerHTML = '<select id="country-select" name="country"><option selected value="">Pick a country</option></select></p >'
+};
+selectBox.addTo(map); */
+// {"<img src='my-layer-icon' />  myLayer}
