@@ -1,6 +1,6 @@
 .basemaps {
-    border-radius: 4px;
-    height: 69px;
+    border-radius: 30px;
+    height: 60px;
 }
 
 .basemaps.closed .basemap {
@@ -18,20 +18,19 @@
 .basemap {
     display: inline-block; /* todo: flexbox? */
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 30px;
 }
 
 .basemap.active img {
     border-color: pink;
-    border-radius: 4px;
+    border-radius:30px;
  }
 
-.basemap img {
-    width: 61px;
-    height: 61px;
+.basemap img {    width: 60px;
+    height: 60px;
     padding: 2px;
     margin-right: 2px;
-    border-radius: 4px;
+    border-radius: 30px;
     opacity: 0.8;
     border: 2px solid rgba(0, 0, 0, 0.2);
     background: rgba(244,244,244,0.8) 
