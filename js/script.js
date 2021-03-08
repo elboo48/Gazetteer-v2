@@ -328,31 +328,135 @@ $('#country-select').on('change', function () {
 				for (let i = 0; i < result.data.queryresult.pods.length; i++) {
 					let title = result.data.queryresult.pods[i].title
 					pods[title] = result.data.queryresult.pods[i];
-                }
-				
-				let pop = pods.Demographics.subpods[0].plaintext
-				console.log(pop)
-				//pop = pop.replace('million people ', '');
-				//pop = pop.replaceAll('world rank: ', '');
-				let reg = /\s\(201[0-9]\sestimate\)\s/g;
-				//pop = pop.replace(reg, '');
-				let x = pop.split(reg);
-				//x[1] = x[1].slice(21);
+				}
+			//	console.log(pods)
+				//population data
 				let demo = []
+				let pop = pods.Demographics.subpods[0].plaintext
+				let reg = /\s\(201[0-9]\sestimate\)\s/g;
+				let x = pop.split(reg);
 				for (let i = 0; i < x.length; i++) {
 					let index = x[i].indexOf('|');
 					let str = x[i];
 					let num = str.slice(index + 2, index + 6);
-					console.log(num);
 					index = x[i].indexOf(':');
 					let rank = x[i].slice(index + 2, index + 6);	
 					demo[i] = { num, rank };
-                }
-				console.log(demo);
+				}
+				if (x[0].includes('million')) {
+					$('#pop').html(demo[0].num + ' M');
+				}
+				else if (x[0].includes('billion')) {
+					$('#pop').html(demo[0].num + ' B');
+				}
+				else {
+					let index = x[0].indexOf('|');
+					let n = x[0].slice(index + 2, index + 8);
+					popNumber = n.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+					$('#pop').html(popNumber);
+					console.log(popNumber)
+				}	
+				console.log(demo[0].num);
+				console.log(demo[1].num)
+				console.log(demo[2].num)
+				console.log(demo[3].num)
+				$('#popDen').html(demo[1].num + 'people/mile<sup>2</sup>');
+				$('#popInc').html(demo[2].num + ' %/year');
+				$('#lifeExp').html(demo[3].num + ' years');
+				// health data
+				$('#healthCard').show();
+				$('#healthRow').show();
+				$('#bedsRow').show();
+				$('#docsRow').show();
+				if (pods['Health care'] != undefined) {
+					let health = pods['Health care'].subpods[0].plaintext
+					let y = health.split('| ');
+					let healthNums = [];
+					if (y.length == 4) {
+						for (let i = 0; i < y.length; i++) {
+							let index = y[i].indexOf(' ');
+							let str = y[i];
+							let num = str.slice(0, index);
+							healthNums[i] = num;
+						}
+						$('#healthSpending').html(healthNums[1] + ' person/year');
+						$('#doctors').html(healthNums[2] + ' per 1,000 people');
+						$('#beds').html(healthNums[3] + ' per 1,000 people');
+						console.log(healthNums[1])
+						console.log(healthNums[2])
+						console.log(healthNums[3])
+					}
+					else if (y.length == 3) {
+						if (y[0] == 'health spending ' && y[1].includes('physicians')) {
+							for (let i = 0; i < y.length; i++) {
+								let index = y[i].indexOf(' ');
+								let str = y[i];
+								let num = str.slice(0, index);
+								healthNums[i] = num;
+							}
+							$('#healthSpending').html(healthNums[1] + ' person/year');
+							$('#doctors').html(healthNums[2] + ' per 1,000 people');
+							$('#bedRow').hide();
+							console.log(healthNums[1])
+							console.log(healthNums[2])
+							
+						}
+						else if (y[0] == 'health spending ' && y[1].includes('physicians')) {
+							for (let i = 0; i < y.length; i++) {
+								let index = y[i].indexOf(' ');
+								let str = y[i];
+								let num = str.slice(0, index);
+								healthNums[i] = num;
+							}
+							$('#healthSpending').html(healthNums[1] + ' person/year');
+							$('#beds').html(healthNums[2] + ' per 1,000 people');
+							$('#docRow').hide();
+							console.log(healthNums[1])
+							console.log(healthNums[2])
+							
+						}
+						else {
+							for (let i = 0; i < y.length; i++) {
+								let index = y[i].indexOf(' ');
+								let str = y[i];
+								let num = str.slice(0, index);
+								healthNums[i] = num;
+							}
+							$('#doctors').html(healthNums[1] + ' per 1,000 people');
+							$('#beds').html(healthNums[2] + ' per 1,000 people');
+							$('#healthRow').hide();
+							console.log(healthNums[1])
+							console.log(healthNums[2])
+						}
+					}
+					if (pods['Health care'] != undefined) {
+						let healthUN = pods['UN Human Development Index'].subpods[0].plaintext;
+						console.log(healthUN)
+						let index = healthUN.indexOf(': ');
+						let healthRank = healthUN.slice(index + 2, index + 7);
+						if (healthRank.includes(')')) {
+							healthRank = healthRank.slice(0, -1);
+						}
+						console.log(healthRank) 
+						$('#healthRank').html(healthRank);
+					}
+				}
+				else {
+					$('#healthCard').hide();
+				}
+				
+            }
 				
 
-				$('#pop').html(demo[0].num + 'M');
-/*
+
+
+
+				//
+				// education data
+
+				
+				
+				/*
  * 
  * Demographics.subpods[0].__proto__
 				data.queryresult.pods[7].subpods[0].plaintext...data.queryresult.pods[7].title == demographics
@@ -366,7 +470,7 @@ $('#country-select').on('change', function () {
 		data.queryresult.pods[12].subpods[0].plaintext - economic properties gdp
 		13 employment
 		14 business information - tax rates and new businesses */
-			}
+		
 		},
 		error: function (jqXHR, textStatus, errorThrown) {
 			console.log(textStatus);
@@ -429,7 +533,6 @@ $('#country-select').on('change', function () {
 		},
 		success: function (result) {
 			if (result.status.name == "ok") {
-				console.log(result)
 				let dt = DateTime.fromObject({ zone: result.data[0].annotations.timezone.name })
 				let localTime = dt.toLocaleString(DateTime.DATETIME_MED)
 				let split = localTime.split(', ');
@@ -568,7 +671,7 @@ $('#country-select').on('change', function () {
 				fc: 'PPLC',
 			},
 			success: function (result) {
-				if (result.status.name == "ok") {
+				if (result.status.name == "ok" && result.data.length > 0) {
 					let pop = numberWithCommas(result.data[0].population);
 					let content = $('<div id="cap" />');
 					content.html(
@@ -614,7 +717,10 @@ $('#country-select').on('change', function () {
 					capitalObj.addTo(map);
 					addToBar(capitalObj, "capitalObj");
 					resolve('foo');
-				};
+				}
+				else {
+					resolve('foo');
+                }
 			},
 			error: function (jqXHR, textStatus, errorThrown) {
 				console.log(textStatus);
@@ -1299,23 +1405,44 @@ $('#country-select').on('change', function () {
 	}
 
 	// once all buttons completed, add to a bar and display on map
-	Promise.all([libPromise, citiesPromise, hospPromise, musPromise, thrPromise, uniPromise, capitalPromise, trainPromise, metroPromise, busPromise]).then((values) => {
-		let overlayMaps = {
-			"<span class='city-layer-item'>Capital city</span>": toggleArray['capitalObj'],
-			"Major cities": toggleArray['cityCluster'],	
-			"Hospitals": toggleArray['hospCluster'], 
-			"Univerisities": toggleArray['uniCluster'],
-			"Libraries": toggleArray['libCluster'],
-			"Museums": toggleArray['musCluster'],
-			"Theatres": toggleArray['thrCluster'],
-			"<span class='transport-layer-item'>Airports</span>": toggleArray['airportCluster'],
-			"Train stations": toggleArray['trainCluster'],
-			"Metro stations": toggleArray['metroCluster'],
-			"Bus stations": toggleArray['busCluster'],
-			"<span class='clouds-layer-item'>Clouds</span>": clouds,
-			"Rain": rain,
-			"Snow": snow,
-		};
+	Promise.all([libPromise, citiesPromise, capitalPromise, hospPromise, musPromise, thrPromise, uniPromise, trainPromise, metroPromise, busPromise]).then((values) => {
+		let overlayMaps = {};
+		if (toggleArray['capitalObj']) {
+			overlayMaps = {
+				"<span class='city-layer-item'>Capital city</span>": toggleArray['capitalObj'],
+				"Major cities": toggleArray['cityCluster'],
+				"Hospitals": toggleArray['hospCluster'],
+				"Univerisities": toggleArray['uniCluster'],
+				"Libraries": toggleArray['libCluster'],
+				"Museums": toggleArray['musCluster'],
+				"Theatres": toggleArray['thrCluster'],
+				"<span class='transport-layer-item'>Airports</span>": toggleArray['airportCluster'],
+				"Train stations": toggleArray['trainCluster'],
+				"Metro stations": toggleArray['metroCluster'],
+				"Bus stations": toggleArray['busCluster'],
+				"<span class='clouds-layer-item'>Clouds</span>": clouds,
+				"Rain": rain,
+				"Snow": snow,
+			};
+		}
+		else {
+			overlayMaps = {
+				"<span class='city-layer-item'>Major cities</span>": toggleArray['cityCluster'],
+				"Hospitals": toggleArray['hospCluster'],
+				"Univerisities": toggleArray['uniCluster'],
+				"Libraries": toggleArray['libCluster'],
+				"Museums": toggleArray['musCluster'],
+				"Theatres": toggleArray['thrCluster'],
+				"<span class='transport-layer-item'>Airports</span>": toggleArray['airportCluster'],
+				"Train stations": toggleArray['trainCluster'],
+				"Metro stations": toggleArray['metroCluster'],
+				"Bus stations": toggleArray['busCluster'],
+				"<span class='clouds-layer-item'>Clouds</span>": clouds,
+				"Rain": rain,
+				"Snow": snow,
+			};
+        }
+		console.log('in');
 		let overlays = L.control.layers({}, overlayMaps).addTo(map);
 		$('.city-layer-item').parent().parent().prepend('<b>Places:</b><br>');
 		$('.transport-layer-item').parent().parent().prepend('<b>Transport:</b><br>');

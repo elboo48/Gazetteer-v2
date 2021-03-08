@@ -29,57 +29,101 @@
     <div id="countryModal" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="countryName"></h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <div class="modal-header d-block">
+                    <div class="d-flex">
+                        <h4 class="modal-title" id="countryName"></h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <p class="modal-title"><i class="fas fa-clock"></i> <span id="localTime"></span></p>
                 </div>
-
                 <div id="accordion">
                     <div class="card">
                         <div class="card-header" id="headingOne">
                             <h5 class="mb-0" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                             Population
+                                Government
                             </h5>
                         </div>
                         <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-                             <table class="table table-info table-striped table-bordered">
-                                    <tr>
-                                        <td scope="row"><i class="fas fa-clock"></i> <span id="localTime"></span></tdscope="row">
-                                        <td><i class="fas fa-user-plus"></i> <span id="pop"></span></td>
-                                    </tr>
-                                    <tr>
-                                        <td scope="row"><i class="fas fa-phone-alt"></i> <span id="callingCode"></span></td>
-                                        <td><i class="fas fa-city"></i> <span id="capital"></span></td>
-                                    </tr>
-                             </table> 
+                            <table class="table table-info table-striped">
+                                <tr>
+                                    
+                                    
+                                </tr>
+                                <tr>
+                                   
+                                </tr>
+                            </table>
                         </div>
                     </div>
                     <div class="card">
                         <div class="card-header" id="headingTwo">
                             <h5 class="mb-0" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-                                Health
+                                Population
                             </h5>
                         </div>
                         <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
-                            <table class="table table-info table-striped table-bordered">
+                            <table class="table table-striped">
                                 <tr>
-                                    <td scope="row"><i class="fas fa-clock"></i> <span id="localTime"></span></tdscope="row">
-                                    <td><i class="fas fa-user-plus"></i> <span id="pop"></span></td>
+                                    <td scope="row"><i class="fas fa-users"></i></td>
+                                    <td>Total population</td>
+                                    <td><span id="pop" class="float-right"></span></td>
                                 </tr>
                                 <tr>
-                                    <td scope="row"><i class="fas fa-phone-alt"></i> <span id="callingCode"></span></td>
-                                    <td><i class="fas fa-city"></i> <span id="capital"></span></td>
+                                    <td scope="row"><i class="fas fa-house-user"></i></td>
+                                    <td>Population density</td>
+                                    <td><span id="popDen" class="float-right"></span></td>
+                                </tr>
+                                <tr>
+                                    <td scope="row"><i class="fas fa-user-plus"></i></td>
+                                    <td>Population increase</td>
+                                    <td><span id="popInc" class="float-right"></span></td>
+                                </tr>
+                                <tr>
+                                    <td scope="row"><i class="fas fa-ambulance"></i></td>
+                                    <td>Life Expectancy</td>
+                                    <td><span id="lifeExp" class="float-right"></span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card" id="healthCard">
+                        <div class="card-header" id="headingThree">
+                            <h5 class="mb-0" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                                Health
+                            </h5>
+                        </div>
+                        <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+                            <table class="table table-striped ">
+                                <tr id="heathRow">
+                                    <td scope="row"><i class="fas fa-heartbeat"></i></td>
+                                    <td>Health spending (USD)</td>
+                                    <td><span id="healthSpending" class="float-right"></span></td>
+                                </tr>
+                                <tr id="docRow">
+                                    <td scope="row"><i class="fas fa-user-md"></i></td>
+                                    <td>Doctors</td>
+                                    <td><span id="doctors" class="float-right"></span></td>
+                                </tr>
+                                <tr id="bedRow">
+                                    <td scope="row"><i class="fas fa-procedures"></i></td>
+                                    <td>Hospital beds</td>
+                                    <td><span id="beds" class="float-right"></span></td>
+                                </tr>
+                                <tr id="healthRankRow">
+                                    <td scope="row"><i class="fas fa-hand-holding-medical"></i></td>
+                                    <td>UN health development rank</td>
+                                    <td><span id="healthRank" class="float-right"></span></td>
                                 </tr>
                             </table>
                         </div>
                     </div>
                     <div class="card">
-                        <div class="card-header" id="headingThree">
-                            <h5 class="mb-0" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                        <div class="card-header" id="headingFour">
+                            <h5 class="mb-0" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
                                 Education
                             </h5>
                         </div>
-                        <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+                        <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
                             <table class="table table-info table-striped table-bordered">
                                 <tr>
                                     <td scope="row"><i class="fas fa-clock"></i> <span id="localTime"></span></tdscope="row">
@@ -92,14 +136,14 @@
                             </table>
                         </div>
                     </div>
-
-                    
-                    <div class="modal-body">
-                        <p><span id="summary"></span></p>
-                    </div>
-                </div><!-- /.modal-content -->
-            </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
+                </div>
+                <div class="modal-body">
+                    <p><span id="summary"></span></p>
+                </div>
+            </div>
+         </div>
+    </div>
+    <!-- weather modal-->
     <div id="weatherModal" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
@@ -165,5 +209,6 @@
 <script src="js\leaflet.markercluster.js"></script>
 <script src="js\L.Control.Basemaps-min.js"></script>
 <script src="js\script.js"></script>
+
 </body>
 </html>

@@ -43,6 +43,9 @@ html, body, #spinnerDiv {
 
 }
 
+.float-right {
+    float: right;
+}
 #infoBox, #weatherIconDiv, #newsIconDiv, #financeIconDiv {
     width: 52px;
     height: 52px;
@@ -61,7 +64,7 @@ html, body, #spinnerDiv {
     background-color: rgba(155, 89, 182, 0.5)
 }
 
-.fas {
+.fas.fa-cloud-sun, .fas.fa-newspaper, .fas.fa-coins {
     margin: 13px;
 }
 
