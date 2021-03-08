@@ -147,6 +147,9 @@ $('#country-select').on('change', function () {
 	$('#airports-marker-toggle').parent().remove();
 	$('#lib-marker-toggle').parent().remove();
 	$('div.leaflet-control-layers.leaflet-control').remove();
+	// DO WITH REST
+	$('#pop').empty();  
+
 	let toggleArray = [];
 
 	// map draw boundary and shuffle using bounds
@@ -329,40 +332,59 @@ $('#country-select').on('change', function () {
 					let title = result.data.queryresult.pods[i].title
 					pods[title] = result.data.queryresult.pods[i];
 				}
-			//	console.log(pods)
+				console.log(pods)
 				//population data
 				let demo = []
 				let pop = pods.Demographics.subpods[0].plaintext
-				let reg = /\s\(201[0-9]\sestimate\)\s/g;
-				let x = pop.split(reg);
-				for (let i = 0; i < x.length; i++) {
-					let index = x[i].indexOf('|');
-					let str = x[i];
-					let num = str.slice(index + 2, index + 6);
-					index = x[i].indexOf(':');
-					let rank = x[i].slice(index + 2, index + 6);	
-					demo[i] = { num, rank };
-				}
-				if (x[0].includes('million')) {
-					$('#pop').html(demo[0].num + ' M');
-				}
-				else if (x[0].includes('billion')) {
-					$('#pop').html(demo[0].num + ' B');
+				if (pop.includes('Gaza')) {
+					let gazaSplit = pop.split('|');
+					for (let i = 0; i < gazaSplit.length; i++) {
+						let num = gazaSplit[i].slice(1, 5);
+						num = parseFloat(num);
+						demo[i] = num
+					}
+					let population = demo[3] + demo[4];
+					$('#pop').html(population + ' M');
+					let density = demo[5] + demo[6];
+					density = numberWithCommas(density);
+					let growth = demo[7] + demo[8];
+					let life = demo[9] + demo[10]; 
+					$('#popDen').html(density + ' people/mile<sup>2</sup>');
+					$('#popInc').html(growth + ' %/year');
+					$('#lifeExp').html(life + ' years');				
 				}
 				else {
-					let index = x[0].indexOf('|');
-					let n = x[0].slice(index + 2, index + 8);
-					popNumber = n.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-					$('#pop').html(popNumber);
-					console.log(popNumber)
-				}	
-				console.log(demo[0].num);
-				console.log(demo[1].num)
-				console.log(demo[2].num)
-				console.log(demo[3].num)
-				$('#popDen').html(demo[1].num + 'people/mile<sup>2</sup>');
-				$('#popInc').html(demo[2].num + ' %/year');
-				$('#lifeExp').html(demo[3].num + ' years');
+					let reg = /\s\(201[0-9]\sestimate\)\s/g;
+					let x = pop.split(reg);
+					for (let i = 0; i < x.length; i++) {
+						let index = x[i].indexOf('|');
+						let str = x[i];
+						let num = str.slice(index + 2, index + 6);
+						index = x[i].indexOf(':');
+						let rank = x[i].slice(index + 2, index + 6);
+						demo[i] = { num, rank };
+					}
+					if (x[0].includes('million')) {
+						let a = parseFloat(demo[0].num);
+						$('#pop').html(a + ' M');
+					}
+					else if (x[0].includes('billion')) {
+						let a = parseFloat(demo[0].num);
+						$('#pop').html(a + ' B');
+					}
+					else {
+						let index = x[0].indexOf('|');
+						let n = x[0].slice(index + 2, index + 8);
+						n = parseFloat(n)
+						popNumber = numberWithCommas(n);
+						$('#pop').html(popNumber);
+					}
+					let popDen = parseInt(demo[1].num)
+					popDen = numberWithCommas(popDen)
+					$('#popDen').html(popDen + ' people/mile<sup>2</sup>');
+					$('#popInc').html(demo[2].num + ' %/year');
+					$('#lifeExp').html(demo[3].num + ' years');
+				}
 				// health data
 				$('#healthCard').show();
 				$('#healthRow').show();
@@ -372,6 +394,12 @@ $('#country-select').on('change', function () {
 					let health = pods['Health care'].subpods[0].plaintext
 					let y = health.split('| ');
 					let healthNums = [];
+					function fixSpend(x) {
+						x = x.substring(1);
+						x = parseInt(x);
+						x = numberWithCommas(x);
+						return x;
+                    }
 					if (y.length == 4) {
 						for (let i = 0; i < y.length; i++) {
 							let index = y[i].indexOf(' ');
@@ -379,12 +407,10 @@ $('#country-select').on('change', function () {
 							let num = str.slice(0, index);
 							healthNums[i] = num;
 						}
-						$('#healthSpending').html(healthNums[1] + ' person/year');
+						let healthSpend = fixSpend(healthNums[1])	
+						$('#healthSpending').html('$' + healthSpend + ' person/year');
 						$('#doctors').html(healthNums[2] + ' per 1,000 people');
 						$('#beds').html(healthNums[3] + ' per 1,000 people');
-						console.log(healthNums[1])
-						console.log(healthNums[2])
-						console.log(healthNums[3])
 					}
 					else if (y.length == 3) {
 						if (y[0] == 'health spending ' && y[1].includes('physicians')) {
@@ -394,26 +420,22 @@ $('#country-select').on('change', function () {
 								let num = str.slice(0, index);
 								healthNums[i] = num;
 							}
-							$('#healthSpending').html(healthNums[1] + ' person/year');
+							let healthSpend = fixSpend(healthNums[1])	
+							$('#healthSpending').html('$' + healthSpend + ' person/year');
 							$('#doctors').html(healthNums[2] + ' per 1,000 people');
-							$('#bedRow').hide();
-							console.log(healthNums[1])
-							console.log(healthNums[2])
-							
+							$('#bedRow').hide();						
 						}
-						else if (y[0] == 'health spending ' && y[1].includes('physicians')) {
+						else if (y[0] == 'health spending ' && y[1].includes('beds')) {
 							for (let i = 0; i < y.length; i++) {
 								let index = y[i].indexOf(' ');
 								let str = y[i];
 								let num = str.slice(0, index);
 								healthNums[i] = num;
 							}
-							$('#healthSpending').html(healthNums[1] + ' person/year');
+							let healthSpend = fixSpend(healthNums[1])					
+							$('#healthSpending').html('$' + healthSpend + ' person/year');
 							$('#beds').html(healthNums[2] + ' per 1,000 people');
 							$('#docRow').hide();
-							console.log(healthNums[1])
-							console.log(healthNums[2])
-							
 						}
 						else {
 							for (let i = 0; i < y.length; i++) {
@@ -425,47 +447,37 @@ $('#country-select').on('change', function () {
 							$('#doctors').html(healthNums[1] + ' per 1,000 people');
 							$('#beds').html(healthNums[2] + ' per 1,000 people');
 							$('#healthRow').hide();
-							console.log(healthNums[1])
-							console.log(healthNums[2])
 						}
 					}
-					if (pods['Health care'] != undefined) {
+					if (pods['UN Human Development Index'] != undefined) {
 						let healthUN = pods['UN Human Development Index'].subpods[0].plaintext;
-						console.log(healthUN)
 						let index = healthUN.indexOf(': ');
 						let healthRank = healthUN.slice(index + 2, index + 7);
 						if (healthRank.includes(')')) {
 							healthRank = healthRank.slice(0, -1);
 						}
-						console.log(healthRank) 
 						$('#healthRank').html(healthRank);
 					}
 				}
 				else {
 					$('#healthCard').hide();
 				}
-				
+				// education data
+				if (pods['Education'] != undefined) { }
+				if (pods['Cultural properties'] != undefined) { }
+				if (pods['UN Human Development Index'] != undefined) { }
+
             }
 				
 
 
 
 
-				//
-				// education data
-
-				
 				
 				/*
- * 
- * Demographics.subpods[0].__proto__
-				data.queryresult.pods[7].subpods[0].plaintext...data.queryresult.pods[7].title == demographics
-		data.queryresult.pods[8].subpods[0].plaintext - Cultural properties(langiuages, ethnic mix, literacy)
-		data.queryresult.pods[16].subpods[0].plaintext - Transport vehicles in use 
-		17 education spending as gdp.  	18 health 
-			19 development index, ranking. 
+	
 
-		
+		coins.......
 		data.queryresult.pods[11].subpods[0].plaintext - £1 = 1.4USD Currency
 		data.queryresult.pods[12].subpods[0].plaintext - economic properties gdp
 		13 employment
