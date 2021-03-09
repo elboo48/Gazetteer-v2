@@ -316,7 +316,111 @@ $('#country-select').on('change', function () {
 			console.log(textStatus);
 		}
 	}); 
+	let lowerCountry = countryKey.toLowerCase();
+	lowerCountry = lowerCountry.replaceAll(' ', '_');
+	lowerCountry = lowerCountry.replaceAll('-', '_')
+	console.log(lowerCountry);
+	switch (lowerCountry) {
+		case 'united_kingdom':
+			lowerCountry = 'uk';
+			break;
+		case 'united_arab_emirates':
+			lowerCountry = 'uae';
+			break;
+		case 'congo':
+			lowerCountry = 'democratic_republic_of_the_congo';
+			break;
+		case "côte_d'ivoire":
+			lowerCountry = 'cote_d_ivoire';
+			break;
+		case 'swaziland':
+			lowerCountry = 'eswatini'
+			break;
 
+		default:
+			break;
+    }
+	// get government info
+	$('#govCard').show();
+	const settings = {
+		"async": true,
+		"crossDomain": true,
+		"url": "https://wikiapi.p.rapidapi.com/api/v1/wiki/geography/country/info/" + lowerCountry + "?lan=en",
+		"method": "GET",
+		"headers": {
+			"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
+			"x-rapidapi-host": "wikiapi.p.rapidapi.com"
+		}
+	};
+
+	$.ajax(settings).done(function (response) {
+		console.log(response);
+		// country info modal, government card
+		if (response.government) {
+			$('#govRow').show();
+			if (response.government.includes('parliamentaryconstitutional')) {
+				let gov = response.government.replace('parliamentaryconstitutional', 'parliamentary constitutional ');
+				$('#gov').html(gov);
+			}
+			else {
+				$('#gov').html(response.government)
+			}	
+		}
+		else {
+			$('#govRow').hide();
+        }
+		if (response.Monarch) {
+			$('#monarchRow').show();
+			$('#monarch').html(response.Monarch)
+		}
+		else {
+			$('#monarchRow').hide();
+		}
+		if (response.president) {
+			$('#presidentRow').show();
+			$('#president').html(response.president)
+		}
+		else {
+			$('#presidentRow').hide();
+		}
+		if (response['prime_minister']) {
+			$('#pmRow').show();
+			$('#pm').html(response['prime_minister'])
+		}
+		else {
+			$('#pmRow').hide();
+		}
+		if (response['vice_president']) {
+			$('#vpRow').show();
+			$('#vp').html(response['vice_president'])
+		}
+		else {
+			$('#vpRow').hide();
+		}
+		if (response.legislature) {
+			$('#legislatureRow').show();
+			$('#legislature').html(response.legislature)
+		}
+		else {
+			$('#legislatureRow').hide();
+		}
+		if (response['lower_house']) {
+			$('#lHouseRow').show();
+			$('#lHouse').html(response['lower_house'])
+		}
+		else {
+			$('#lHouseRow').hide();
+		}
+		if (response['upper_house']) {
+			$('#uHouseRow').show();
+			$('#uHouse').html(response['upper_house'])
+		}
+		else {
+			$('#uHouseRow').hide();
+		}
+	}).fail(function () {
+		$('#govCard').hide();
+	});
 	// get population, health and money info WolframAlpha API
 	$.ajax({
 		url: "php/getWolframAlpha.php",
@@ -335,7 +439,6 @@ $('#country-select').on('change', function () {
 				console.log(pods)
 			// Country info modal
 				//population data
-				
 				$('#popCard').show();
 				if (pods['Demographics'] != undefined) {
 					let demo = []
@@ -539,9 +642,11 @@ $('#country-select').on('change', function () {
 				}	
 				// Money modal
 				$('#gdpCard').show();
-				$('#inflationRow').show();
-				$('#standardsRow').show();
+				$('#employmentCard').show();
+				$('#currencyCard').show();
 				$('#businessCard').show();
+				$('#inflationRow').show();
+				$('#standardsRow').show();				
 				$('#newTotalRow').show();
 				$('#childLabourRow').show();
 				if (pods['Economic properties'] != undefined || pods['Business information'] != undefined || pods['Employment'] != undefined ) {
@@ -597,7 +702,9 @@ $('#country-select').on('change', function () {
 						let cIndex = currency.lastIndexOf('=');
 						let conversion = currency.substring(cIndex + 2);
 						$('#conversion').html('= ' + conversion);
-					}
+					} else {
+						$('#currencyCard').hide();
+                    }
 					// business card
 					if (pods['Business information'] != undefined) {
 						let business = pods['Business information'].subpods[0].plaintext;
@@ -625,50 +732,50 @@ $('#country-select').on('change', function () {
 					// employment card
 					if (pods['Employment'] != undefined) {
 						let employment = pods['Employment'].subpods[0].plaintext;
-						console.log(employment);
 						let e = employment.split('| ');
 						let empNums = [];
 						for (let i = 0; i < e.length; i++) {
 							let num = e[i].slice(0, 7)
 							empNums[i] = num;
 						}
-						console.log(empNums)
 						let unemployment = parseFloat(empNums[1]);
 						$('#unemployment').html(unemployment + ' %')
-						if (empNums[3].includes('m')) {
-							let labour = parseFloat(empNums[3])
-							$('#labour').html(labour + ' M')
-						}
-						else {
-							let labour = parseInt(empNums[3])
-							labour = numberWithCommas(labour)
-							$('#labour').html(labour)
-						}
-						if (empNums[4]) {
+						if (employment.includes('long-term')) {
+							if (empNums[3].includes('m')) {
+								let labour = parseFloat(empNums[3])
+								$('#labour').html(labour + ' M')
+							}
+							else {
+								let labour = parseInt(empNums[3])
+								labour = numberWithCommas(labour)
+								$('#labour').html(labour)
+							}
+						} else {
+							if (empNums[2].includes('m')) {
+								let labour = parseFloat(empNums[2])
+								$('#labour').html(labour + ' M')
+							}
+							else {
+								let labour = parseInt(empNums[2])
+								labour = numberWithCommas(labour)
+								$('#labour').html(labour)
+							}
+                        }
+						if (empNums.length == 5) {
 							let childLabour = parseFloat(empNums[4]);
 							$('#childLabour').html(childLabour + ' %')
 						}
 						else {
 							$('#childLabourRow').hide();
-                        }
-					}
+						}
+					} else {
+						$('#employmentCard').hide();
+                    }
 				}
 				else {
 					finance.removeControl();
                 }
-
-
-
-				//data.queryresult.pods[12].subpods[0].plaintext - economic properties gdp
-				// currency data
-				 //data.queryresult.pods[11].subpods[0].plaintext - £1 = 1.4USD Currency
-				// employment data
-				 // 13 employment
-				// business information
-					 //14 business information - tax rates and new businesses 
-            }
-				
-			
+            }		
 		},
 		error: function (jqXHR, textStatus, errorThrown) {
 			console.log(textStatus);
@@ -743,7 +850,7 @@ $('#country-select').on('change', function () {
 		}
 	});
 
-	// Rest countries API call & nested currency conversion API call
+	// Rest countries API call 
 	$.ajax({
 		url: "php/getRest.php",
 		type: 'POST',
@@ -773,6 +880,16 @@ $('#country-select').on('change', function () {
 			"async": true,
 			"crossDomain": true,
 			"url": "https://world-geo-data.p.rapidapi.com/countries/" + this.value + "/cities?format=json&language=en&min_population=100000",
+			"method": "GET",
+			"headers": {
+				"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
+				"x-rapidapi-host": "world-geo-data.p.rapidapi.com"
+			}
+		};
+		const settings2 = {
+			"async": true,
+			"crossDomain": true,
+			"url": "https://world-geo-data.p.rapidapi.com/countries/" + this.value + "/cities?format=json&language=en&min_population=1000",
 			"method": "GET",
 			"headers": {
 				"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
@@ -836,7 +953,67 @@ $('#country-select').on('change', function () {
 			cityCluster.addTo(map);
 			addToBar(cityCluster, 'cityCluster');
 			resolve('foo');
-		});	
+		})
+		.fail(function () {
+			$.ajax(settings2).done(function (response) {
+				if (cityCluster) {
+					map.removeLayer(cityCluster);
+				}
+				for (i = 0; i < response.cities.length; i++) {
+					let pop = numberWithCommas(response.cities[i].population);
+					// create city markers and put in array
+					let content = $('<div id="wiki" />');
+					content.html('<div id="wikiImg"/></div><b id="wikiURL">' + response.cities[i].name + '</b><br>Population: ' + pop);
+					obj = L.marker([response.cities[i].latitude, response.cities[i].longitude], {
+						icon: L.BeautifyIcon.icon({
+							icon: 'fas fa-city',
+							borderColor: 'rgba(255,255,255, 0.4)',
+							backgroundColor: 'rgba(48, 131, 220, 1)',
+							textColor: 'rgba(255,255,255, 1)'
+						})
+					})
+						.bindPopup(content[0], {
+							maxWidth: "300px"
+						})
+						.on('click', onCityClick);
+					// Wiki API call on city popup click
+					let encCities = encodeURIComponent(response.cities[i].name);
+					function onCityClick(e) {
+						$('#wikiImg').empty();
+						$.ajax({
+							url: "php/getWiki.php",
+							type: 'POST',
+							dataType: 'json',
+							data: {
+								q: encCities,
+								title: encCities
+							},
+							success: function (result) {
+								if (result.status.name == "ok") {
+									$('#wikiURL').wrap('<a href="https://' + result.data[0].wikipediaUrl + '" target= _blank >');
+									if (result.data[0].thumbnailImg) {
+										$('#wikiImg').prepend('<img id="cityImg" src="' + result.data[0].thumbnailImg + '" alt="City image" style="width:100%">');
+										$('#cityImg').css({ "display": "block", "opacity": "1", "object-fit": "cover", "border": "1px solid lightgrey", "margin-bottom": "5px", "border-radius": "4px" });
+									};
+								};
+							},
+							error: function (jqXHR, textStatus, errorThrown) {
+								console.log(textStatus);
+							}
+						});
+					};
+					obj.bindPopup(content[0]);
+					cityArray.push(obj);
+				}
+				// creat cities cluster layer and put into easy button
+				cities = new L.layerGroup(cityArray);
+				cityCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+				cityCluster.addLayer(cities);
+				cityCluster.addTo(map);
+				addToBar(cityCluster, 'cityCluster');
+				resolve('foo');
+			})
+		});
 	});
 
 	//  Geonames API search capital city and Wiki API search on popup click
