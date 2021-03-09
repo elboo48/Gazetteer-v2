@@ -36,14 +36,14 @@
                     </div>
                     <p class="modal-title"><i class="fas fa-clock"></i> <span id="localTime"></span></p>
                 </div>
-                <div id="accordion">
+                <div id="accordionCountry">
                     <div class="card">
                         <div class="card-header" id="headingOne">
                             <h5 class="mb-0" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                                 Government
                             </h5>
                         </div>
-                        <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+                        <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordionCountry">
                             <table class="table table-info table-striped">
                                 <tr>
                                     
@@ -55,13 +55,13 @@
                             </table>
                         </div>
                     </div>
-                    <div class="card">
+                    <div class="card" id="popCard">
                         <div class="card-header" id="headingTwo">
                             <h5 class="mb-0" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
                                 Population
                             </h5>
                         </div>
-                        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+                        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionCountry">
                             <table class="table table-striped">
                                 <tr>
                                     <td scope="row"><i class="fas fa-users"></i></td>
@@ -92,7 +92,7 @@
                                 Health
                             </h5>
                         </div>
-                        <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+                        <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionCountry">
                             <table class="table table-striped ">
                                 <tr id="healthRow">
                                     <td scope="row"><i class="fas fa-heartbeat"></i></td>
@@ -117,21 +117,38 @@
                             </table>
                         </div>
                     </div>
-                    <div class="card">
+                    <div class="card" id="eduCard">
                         <div class="card-header" id="headingFour">
                             <h5 class="mb-0" data-toggle="collapse" data-target="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
                                 Education
                             </h5>
                         </div>
-                        <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
-                            <table class="table table-info table-striped table-bordered">
-                                <tr>
-                                    <td scope="row"><i class="fas fa-clock"></i> <span id="localTime"></span></tdscope="row">
-                                    <td><i class="fas fa-user-plus"></i> <span id="pop"></span></td>
+                        <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordionCountry">
+                            <table class="table table-striped">
+                                <tr id="eduSpendRow">
+                                    <td scope="row"><i class="fas fa-school"></i></td>
+                                    <td>Public education spending</td>
+                                    <td><span id="eSpend" class="float-right"></span></td>
                                 </tr>
-                                <tr>
-                                    <td scope="row"><i class="fas fa-phone-alt"></i> <span id="callingCode"></span></td>
-                                    <td><i class="fas fa-city"></i> <span id="capital"></span></td>
+                                <tr id="studentsRow">
+                                    <td scope="row"><i class="fas fa-apple-alt"></i></td>
+                                    <td>Students</td>
+                                    <td><span id="students" class="float-right"></span></td>
+                                </tr>
+                                <tr id="teachersRow">
+                                    <td scope="row"><i class="fas fa-chalkboard-teacher"></i></td>
+                                    <td>Teachers</td>
+                                    <td><span id="teachers" class="float-right"></span></td>
+                                </tr>
+                                <tr id="literacyRow">
+                                    <td scope="row"><i class="fas fa-book-reader"></i></td>
+                                    <td>Literacy rate</td>
+                                    <td><span id="literacy" class="float-right"></span></td>
+                                </tr>
+                                <tr id="eduRankRow">
+                                    <td scope="row"><i class="fas fa-award"></i></td>
+                                    <td>UN Education development rank</td>
+                                    <td><span id="eduRank" class="float-right"></span></td>
                                 </tr>
                             </table>
                         </div>
@@ -143,7 +160,6 @@
             </div>
          </div>
     </div>
-    <!-- weather modal-->
     <div id="weatherModal" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
@@ -161,7 +177,7 @@
                 </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
+    </div>
     <div id="newsModal" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
@@ -181,19 +197,113 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
     <div id="financeModal" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Modal title</h4>
+                    <h4 class="modal-title">Economy</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 
                 </div>
-                <div class="modal-body">
-                    <p>One fine body&hellip;</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Confirm</button>
+                <div id="accordionEcon">
+                    <div class="card" id="gdpCard">
+                        <div class="card-header" id="econOne">
+                            <h5 class="mb-0" data-toggle="collapse" data-target="#econCollapseOne" aria-expanded="true" aria-controls="econCollapseOne">
+                                Gross domestic product (GDP)
+                            </h5>
+                        </div>
+                        <div id="econCollapseOne" class="collapse" aria-labelledby="econOne" data-parent="#accordionEcon">
+                            <table class="table table-striped">
+                                <tr>
+                                    <td scope="row"><i class="fas fa-piggy-bank"></i></td>
+                                    <td>Gross Domestic Product (USD)</td>
+                                    <td><span id="gdp" class="float-right"></span></td>
+                                </tr>
+                                <tr>
+                                    <td scope="row"><i class="fas fa-chevron-circle-right"></i></td>
+                                    <td>GDP world rank</td>
+                                    <td><span id="gdpRank" class="float-right"></span></td>
+                                </tr>
+                                <tr id="inflationRow">
+                                    <td scope="row"><i class="fas fa-chart-line"></i></td>
+                                    <td>Inflation</td>
+                                    <td><span id="inflation" class="float-right"></span></td>
+                                </tr>
+                                <tr id="standardsRow">
+                                    <td scope="row"><i class="fas fa-laptop-house"></i></td>
+                                    <td>UN living standards rank</td>
+                                    <td><span id="standards" class="float-right"></span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card" id="currencyCard">
+                        <div class="card-header" id="econTwo">
+                            <h5 class="mb-0" data-toggle="collapse" data-target="#econCollapseTwo" aria-expanded="true" aria-controls="econCollapseTwo">
+                                Currency
+                            </h5>
+                        </div>
+                        <div id="econCollapseTwo" class="collapse" aria-labelledby="econTwo" data-parent="#accordionEcon">
+                            <table class="table table-striped">
+                                <tr>
+                                    <td scope="row"><strong id="currencySymbol"></strong></td>
+                                    <td><span id="currencyName"></span></td>
+                                    <td><span id="conversion" class="float-right"></span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card" id="businessCard">
+                        <div class="card-header" id="econThree">
+                            <h5 class="mb-0" data-toggle="collapse" data-target="#econCollapseThree" aria-expanded="true" aria-controls="econCollapseThree">
+                                Business
+                            </h5>
+                        </div>
+                        <div id="econCollapseThree" class="collapse" aria-labelledby="econThree" data-parent="#accordionEcon">
+                            <table class="table table-striped ">
+                                <tr id="taxRow">
+                                    <td scope="row"><i class="fas fa-donate"></i></td>
+                                    <td>Business tax rate</td>
+                                    <td><span id="tax" class="float-right"></span></td>
+                                </tr>
+                                <tr id="newBusinessRow">
+                                    <td scope="row"><i class="fas fa-handshake"></i></td>
+                                    <td>New businesses</td>
+                                    <td><span id="newBusiness" class="float-right"></span></td>
+                                </tr>
+                                <tr id="newTotalRow">
+                                    <td scope="row"><i class="fas fa-chart-pie"></i></td>
+                                    <td>New business growth</td>
+                                    <td><span id="per" class="float-right"></span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card" id="employmentCard">
+                        <div class="card-header" id="econFour">
+                            <h5 class="mb-0" data-toggle="collapse" data-target="#econCollapseFour" aria-expanded="true" aria-controls="econCollapseFour">
+                                Employment
+                            </h5>
+                        </div>
+                        <div id="econCollapseFour" class="collapse" aria-labelledby="econFour" data-parent="#accordionEcon">
+                            <table class="table table-striped">
+                                <tr id="unemploymentRow">
+                                    <td scope="row"><i class="fas fa-user-clock"></i></td>
+                                    <td>Unemployment rate</td>
+                                    <td><span id="unemployment" class="float-right"></span></td>
+                                </tr>
+                                <tr id="labourRow">
+                                    <td scope="row"><i class="fas fa-people-carry"></i></td>
+                                    <td>Labour force</td>
+                                    <td><span id="labour" class="float-right"></span></td>
+                                </tr>
+                                <tr id="childLabourRow">
+                                    <td scope="row"><i class="fas fa-child"></i></td>
+                                    <td>Economically active children</td>
+                                    <td><span id="childLabour" class="float-right"></span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->

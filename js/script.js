@@ -333,63 +333,72 @@ $('#country-select').on('change', function () {
 					pods[title] = result.data.queryresult.pods[i];
 				}
 				console.log(pods)
+			// Country info modal
 				//population data
-				let demo = []
-				let pop = pods.Demographics.subpods[0].plaintext
-				if (pop.includes('Gaza')) {
-					let gazaSplit = pop.split('|');
-					for (let i = 0; i < gazaSplit.length; i++) {
-						let num = gazaSplit[i].slice(1, 5);
-						num = parseFloat(num);
-						demo[i] = num
-					}
-					let population = demo[3] + demo[4];
-					$('#pop').html(population + ' M');
-					let density = demo[5] + demo[6];
-					density = numberWithCommas(density);
-					let growth = demo[7] + demo[8];
-					let life = demo[9] + demo[10]; 
-					$('#popDen').html(density + ' people/mile<sup>2</sup>');
-					$('#popInc').html(growth + ' %/year');
-					$('#lifeExp').html(life + ' years');				
-				}
-				else {
-					let reg = /\s\(201[0-9]\sestimate\)\s/g;
-					let x = pop.split(reg);
-					for (let i = 0; i < x.length; i++) {
-						let index = x[i].indexOf('|');
-						let str = x[i];
-						let num = str.slice(index + 2, index + 6);
-						index = x[i].indexOf(':');
-						let rank = x[i].slice(index + 2, index + 6);
-						demo[i] = { num, rank };
-					}
-					if (x[0].includes('million')) {
-						let a = parseFloat(demo[0].num);
-						$('#pop').html(a + ' M');
-					}
-					else if (x[0].includes('billion')) {
-						let a = parseFloat(demo[0].num);
-						$('#pop').html(a + ' B');
+				
+				$('#popCard').show();
+				if (pods['Demographics'] != undefined) {
+					let demo = []
+					let pop = pods.Demographics.subpods[0].plaintext
+					if (pop.includes('Gaza')) {
+						let gazaSplit = pop.split('|');
+						for (let i = 0; i < gazaSplit.length; i++) {
+							let num = gazaSplit[i].slice(1, 5);
+							num = parseFloat(num);
+							demo[i] = num
+						}
+						let population = demo[3] + demo[4];
+						$('#pop').html(population + ' M');
+						let density = demo[5] + demo[6];
+						density = numberWithCommas(density);
+						let growth = demo[7] + demo[8];
+						let life = demo[9] + demo[10];
+						$('#popDen').html(density + ' people/mile<sup>2</sup>');
+						$('#popInc').html(growth + ' %/year');
+						$('#lifeExp').html(life + ' years');
 					}
 					else {
-						let index = x[0].indexOf('|');
-						let n = x[0].slice(index + 2, index + 8);
-						n = parseFloat(n)
-						popNumber = numberWithCommas(n);
-						$('#pop').html(popNumber);
+						let reg = /\s\(201[0-9]\sestimate\)\s/g;
+						let x = pop.split(reg);
+						for (let i = 0; i < x.length; i++) {
+							let index = x[i].indexOf('|');
+							let str = x[i];
+							let num = str.slice(index + 2, index + 6);
+							index = x[i].indexOf(':');
+							let rank = x[i].slice(index + 2, index + 6);
+							demo[i] = { num, rank };
+							};
+						if (x[0].includes('million')) {
+							let a = parseFloat(demo[0].num);
+							$('#pop').html(a + ' M');
+						}
+						else if (x[0].includes('billion')) {
+							let a = parseFloat(demo[0].num);
+							$('#pop').html(a + ' B');
+						}
+						else {
+							let index = x[0].indexOf('|');
+							let n = x[0].slice(index + 2, index + 8);
+							n = parseFloat(n)
+							popNumber = numberWithCommas(n);
+							$('#pop').html(popNumber);
+						}
+						let popDen = parseInt(demo[1].num)
+						popDen = numberWithCommas(popDen)
+						$('#popDen').html(popDen + ' people/mile<sup>2</sup>');
+						$('#popInc').html(demo[2].num + ' %/year');
+						$('#lifeExp').html(demo[3].num + ' years');
 					}
-					let popDen = parseInt(demo[1].num)
-					popDen = numberWithCommas(popDen)
-					$('#popDen').html(popDen + ' people/mile<sup>2</sup>');
-					$('#popInc').html(demo[2].num + ' %/year');
-					$('#lifeExp').html(demo[3].num + ' years');
 				}
+				else {
+					$('#popCard').hide();
+                }
 				// health data
 				$('#healthCard').show();
 				$('#healthRow').show();
 				$('#bedsRow').show();
 				$('#docsRow').show();
+				$('#healthRankRow').show();
 				if (pods['Health care'] != undefined) {
 					let health = pods['Health care'].subpods[0].plaintext
 					let y = health.split('| ');
@@ -457,32 +466,209 @@ $('#country-select').on('change', function () {
 							healthRank = healthRank.slice(0, -1);
 						}
 						$('#healthRank').html(healthRank);
-					}
+					} else {
+						$('#healthRankRow').hide();
+                    }
 				}
 				else {
 					$('#healthCard').hide();
 				}
 				// education data
-				if (pods['Education'] != undefined) { }
-				if (pods['Cultural properties'] != undefined) { }
-				if (pods['UN Human Development Index'] != undefined) { }
+				$('#eduCard').show();
+				$('#eduSpendRow').show();
+				$('#studentsRow').show();
+				$('#teachersRow').show();
+				$('#eduRankRow').show();
+				$('#literacyRow').show();
+				if (pods['Education'] != undefined) {
+					let education = pods['Education'].subpods[0].plaintext;
+					let e = education.split('| ');
+					let eduNums = [];
+					for (let i = 0; i < e.length; i++) {
+						let num = e[i].slice(0, 7)
+						eduNums[i] = num;
+					}
+					if (eduNums[0].includes('public')) {
+						let eSpend = parseFloat(eduNums[1]);
+						$('#eSpend').html(eSpend + ' % GDP');
+					}
+					if (eduNums.length == 4) {
+						if (eduNums[2].includes('m')) {
+							let students = parseFloat(eduNums[2]);
+							$('#students').html(students + ' M');
+						} else {
+							let students = parseInt(eduNums[2]);
+							students = numberWithCommas(students);
+							$('#students').html(students);
+						}
+						if (eduNums[3].includes('m')) {
+							let teachers = parseFloat(eduNums[3]);
+							$('#teachers').html(teachers + ' M');
+						} else {
+							let teachers = parseInt(eduNums[3]);
+							teachers = numberWithCommas(teachers);
+							$('#teachers').html(teachers);
+						}
+					} else {
+						$('#studentsRow').hide();
+						$('#teachersRow').hide();
+                    }
+					if (pods['UN Human Development Index'] != undefined) {
+						let eduUN = pods['UN Human Development Index'].subpods[0].plaintext;
+						let index = eduUN.indexOf('education');
+						let eduRank = eduUN.slice(index + 31, index + 36);
+						if (eduRank.includes(')')) {
+							eduRank = eduRank.slice(0, -1);
+						}
+						$('#eduRank').html(eduRank);
+					} else {
+						$('#eduRankRow').hide();
+					}
+					if (pods['Cultural properties'] != undefined) {
+						let literacy = pods['Cultural properties'].subpods[0].plaintext;
+						let index = literacy.indexOf('literacy');
+						literacy = literacy.slice(index + 16, index + 22);
+						literacy = parseFloat(literacy);
+						$('#literacy').html(literacy + ' %');
+					} else {
+						$('#literacyRow').hide();
+                    }
+				}
+				else {
+					$('#eduCard').hide();
+				}	
+				// Money modal
+				$('#gdpCard').show();
+				$('#inflationRow').show();
+				$('#standardsRow').show();
+				$('#businessCard').show();
+				$('#newTotalRow').show();
+				$('#childLabourRow').show();
+				if (pods['Economic properties'] != undefined || pods['Business information'] != undefined || pods['Employment'] != undefined ) {
+					// GDP card
+					if (pods['Economic properties'] != undefined) {
+						let economic = pods['Economic properties'].subpods[0].plaintext;
+						let indexGDP = economic.indexOf('GDP | $');
+						let gdp = economic.slice(indexGDP + 7, indexGDP + 14);
+						let indexRank = economic.indexOf('rank:');
+						let gdpRank = economic.slice(indexRank + 6, indexRank + 11);
+						if (gdpRank.includes(')')) {
+							gdpRank = gdpRank.replace(')', '');
+						}
+						$('#gdpRank').html(gdpRank);
+						if (gdp.includes('t')) {
+							gdp = parseFloat(gdp);
+							$('#gdp').html('$' + gdp + ' T')
+						}
+						else if (gdp.includes('b')) {
+							gdp = parseFloat(gdp);
+							$('#gdp').html('$' + gdp + ' B')
+						}
+						else {
+							gdp = parseFloat(gdp);
+							$('#gdp').html('$' + gdp + ' M')
+						}
+						if (economic.includes('inflation')) {
+							let indexInflation = economic.indexOf('inflation');
+							let inflation = economic.slice(indexInflation + 12, indexInflation + 20);
+							inflationIndex = inflation.indexOf('%');
+							inflation = inflation.slice(0, inflationIndex);
+							$('#inflation').html(inflation + ' %')
+						} else {
+							$('#inflationRow').hide();
+						}
+						if (pods['UN Human Development Index'] != undefined) {
+						let standardsUN = pods['UN Human Development Index'].subpods[0].plaintext;
+						let index = standardsUN.indexOf('living');
+						let standards = standardsUN.slice(index + 38, index + 43);
+						if (standards.includes(')')) {
+							standards = standards.replace(')', '');
+						}
+						$('#standards').html(standards);
+						} else {
+						$('#standardsRow').hide();
+						}
+					} else {
+						$('#gdpCard').hide();
+					}
+					// currency card
+					if (pods['Currency'] != undefined) {
+						let currency = pods['Currency'].subpods[0].plaintext;
+						let cIndex = currency.lastIndexOf('=');
+						let conversion = currency.substring(cIndex + 2);
+						$('#conversion').html('= ' + conversion);
+					}
+					// business card
+					if (pods['Business information'] != undefined) {
+						let business = pods['Business information'].subpods[0].plaintext;
+						let taxIndex = business.indexOf('rate');
+						let tax = business.slice(taxIndex + 7, taxIndex + 12);
+						if (tax.includes('%')) {
+							tax = tax.replace('%', '');
+						}
+						$('#tax').html(tax + ' %');
+						let newIndex = business.lastIndexOf('|');
+						let newBusiness = business.slice(newIndex + 1, newIndex + 7)
+						newBusiness = parseInt(newBusiness);
+						newBusiness = numberWithCommas(newBusiness);
+						$('#newBusiness').html(newBusiness + ' per year');
+						if (business.includes('total businesses')) {
+							let perIndex = business.indexOf('year');
+							let per = business.slice(perIndex + 6, perIndex + 11);
+							$('#per').html(per + ' % annually')
+						} else {
+							$('#newTotalRow').hide();
+                        }
+					} else {
+						$('#businessCard').hide();
+					}
+					// employment card
+					if (pods['Employment'] != undefined) {
+						let employment = pods['Employment'].subpods[0].plaintext;
+						console.log(employment);
+						let e = employment.split('| ');
+						let empNums = [];
+						for (let i = 0; i < e.length; i++) {
+							let num = e[i].slice(0, 7)
+							empNums[i] = num;
+						}
+						console.log(empNums)
+						let unemployment = parseFloat(empNums[1]);
+						$('#unemployment').html(unemployment + ' %')
+						if (empNums[3].includes('m')) {
+							let labour = parseFloat(empNums[3])
+							$('#labour').html(labour + ' M')
+						}
+						else {
+							let labour = parseInt(empNums[3])
+							labour = numberWithCommas(labour)
+							$('#labour').html(labour)
+						}
+						if (empNums[4]) {
+							let childLabour = parseFloat(empNums[4]);
+							$('#childLabour').html(childLabour + ' %')
+						}
+						else {
+							$('#childLabourRow').hide();
+                        }
+					}
+				}
+				else {
+					finance.removeControl();
+                }
 
+
+
+				//data.queryresult.pods[12].subpods[0].plaintext - economic properties gdp
+				// currency data
+				 //data.queryresult.pods[11].subpods[0].plaintext - £1 = 1.4USD Currency
+				// employment data
+				 // 13 employment
+				// business information
+					 //14 business information - tax rates and new businesses 
             }
 				
-
-
-
-
-				
-				/*
-	
-
-		coins.......
-		data.queryresult.pods[11].subpods[0].plaintext - £1 = 1.4USD Currency
-		data.queryresult.pods[12].subpods[0].plaintext - economic properties gdp
-		13 employment
-		14 business information - tax rates and new businesses */
-		
+			
 		},
 		error: function (jqXHR, textStatus, errorThrown) {
 			console.log(textStatus);
@@ -549,7 +735,6 @@ $('#country-select').on('change', function () {
 				let localTime = dt.toLocaleString(DateTime.DATETIME_MED)
 				let split = localTime.split(', ');
 				$('#countryName').html(result.data[0].components.country);
-				$('#callingCode').html('+' + result.data[0].annotations.callingcode);
 				$('#localTime').html(split[2]);
 			}
 		},
@@ -569,28 +754,11 @@ $('#country-select').on('change', function () {
 		success: function (result) {
 			if (result.status.name == "ok") {
 				// Rest countries outputs here 
-				$('#capital').html(result.data.capital);
-				$('#currencyName').html(result.data.currencies[0].name);
+				$('#capital').html(result.data.capital); 
+				console.log(result.data.capital)
+				$('#currencyName').html('1 ' + result.data.currencies[0].name);
 				$('#currencySymbol').html(result.data.currencies[0].symbol);
 				$('#infoBox').prepend('<img id="flag" src="' + result.data.flag + '">');
-				// Nested currency conversion API call 
-				let currencyCode = result.data.currencies[0].code;
-				$.ajax({
-					url: "php/getConversion.php",
-					type: 'POST',
-					dataType: 'json',
-					data: {
-						cc: currencyCode,
-					},
-					success: function (result) {
-						if (result.status.name == "ok") {
-							$('#conversion').html(result.data.rates[currencyCode]);
-						}
-					},
-					error: function (jqXHR, textStatus, errorThrown) {
-						console.log(textStatus);
-						}
-				});  
 			};
 		},
 		error: function (jqXHR, textStatus, errorThrown) {
