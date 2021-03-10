@@ -43,6 +43,12 @@ html, body, #spinnerDiv {
 
 }
 
+figcaption {
+    font-size: 0.8em;
+    font-style: italic;
+}
+
+
 .float-right {
     float: right;
 }

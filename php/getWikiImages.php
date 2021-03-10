@@ -11,12 +11,13 @@
 	$decode = json_decode($result,true);	
 	$imagesKey = key($decode['query']['pages']);
 	foreach($decode['query']['pages'][$imagesKey]['images'] as $imageArray) {
-        if($imageArray['title'] != 'File:Commons-logo.svg' && $imageArray['title'] != 'File:P vip.svg') {
+		if(!str_contains($imageArray['title'], '.svg') && !str_contains($imageArray['title'], '.png') && !str_contains($imageArray['title'], '.ogg') ) {
             $title = str_replace('File:', '', $imageArray['title']);
             $title = str_replace(' ', '_', $title);
 			$imageUrls[] = $title; 
 		}
 	}
+	
 	$output['data'] = $imageUrls;
 	$output['status']['code'] = "200";
 	$output['status']['name'] = "ok";
@@ -24,7 +25,7 @@
 
 	header('Content-Type: application/json; charset=UTF-8');
 
-	echo json_encode($output); 
+	echo json_encode($output);  
 ?>
 
 

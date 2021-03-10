@@ -285,10 +285,40 @@ $('#country-select').on('change', function () {
 		},
 		success: function (result) {
 			if (result.status.name == "ok") {
-				let images = []
+				$('#carouselSlides').empty();
 				for (let i = 0; i < result.data.length; i++) {
-					images[i] = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + result.data[i];
-                }
+					let image = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + result.data[i];
+					console.log(image)
+					console.log(image)
+					if (i == 0) {
+						$('#carouselSlides').append('<div id="item' + i + '"class= "carousel-item active" ><img class="d-block w-100" src="' + image + '" alt="Image"> </div>');
+					}
+					else {
+						$('#carouselSlides').append('<div id="item' + i + '"class= "carousel-item" ><img class="d-block w-100" src="' + image + '" alt="Image"  > </div>');
+					}
+					let encImage = encodeURIComponent(result.data[i]);
+					$.ajax({
+						url: "php/getWikiCaption.php",
+						type: 'POST',
+						dataType: 'json',
+						data: {
+							q: encImage
+						},
+						success: function (result) {
+							if (result.status.name == "ok") {
+								let num = Object.keys(result.data);
+								let longDesc = result.data[num].imageinfo[0].extmetadata.ImageDescription.value
+								console.log(longDesc);
+								let x = '#item' + i;
+								$(x).append('<figcaption >' + longDesc + '</figcaption><br>');
+							}
+						},
+						error: function (jqXHR, textStatus, errorThrown) {
+							console.log(textStatus);
+						}
+					}); 
+				}
+				
 			}
 		},
 		error: function (jqXHR, textStatus, errorThrown) {
@@ -319,7 +349,6 @@ $('#country-select').on('change', function () {
 	let lowerCountry = countryKey.toLowerCase();
 	lowerCountry = lowerCountry.replaceAll(' ', '_');
 	lowerCountry = lowerCountry.replaceAll('-', '_')
-	console.log(lowerCountry);
 	switch (lowerCountry) {
 		case 'united_kingdom':
 			lowerCountry = 'uk';
@@ -354,7 +383,6 @@ $('#country-select').on('change', function () {
 	};
 
 	$.ajax(settings).done(function (response) {
-		console.log(response);
 		// country info modal, government card
 		if (response.government) {
 			$('#govRow').show();
@@ -436,7 +464,6 @@ $('#country-select').on('change', function () {
 					let title = result.data.queryresult.pods[i].title
 					pods[title] = result.data.queryresult.pods[i];
 				}
-				console.log(pods)
 			// Country info modal
 				//population data
 				$('#popCard').show();
