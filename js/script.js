@@ -275,7 +275,59 @@ $('#country-select').on('change', function () {
 	countryKey = getKeyByValue(jArr, this.value);
 	let encCountryKey = encodeURIComponent(countryKey)
 
-	// get Wiki images
+	// OpenCage Forward call for country information for country info modal
+	$.ajax({
+		url: "php/getOpenCageF.php",
+		type: 'POST',
+		dataType: 'json',
+		data: {
+			cc: this.value,
+			q: encCountryKey
+		},
+		success: function (result) {
+			if (result.status.name == "ok") {
+				let dt = DateTime.fromObject({ zone: result.data[0].annotations.timezone.name })
+				let localTime = dt.toLocaleString(DateTime.DATETIME_MED)
+				let split = localTime.split(', ');
+				$('#countryName').html(result.data[0].components.country);
+				$('#localTime').html(split[2]);
+			}
+		},
+		error: function (jqXHR, textStatus, errorThrown) {
+			console.log(textStatus);
+		}
+	});
+
+	// Rest countries API call for currency info for finance modal
+	let lat;
+	let lng;
+	let latLngPromise = new Promise((resolve, reject) => {
+		$.ajax({
+			url: "php/getRest.php",
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				cc: this.value,
+			},
+			success: function (result) {
+				if (result.status.name == "ok") {
+					// Rest countries outputs here 
+					lat = result.data.latlng[0];
+					lng = result.data.latlng[1];
+					resolve('foo');
+					$('#capital').html(result.data.capital);
+					$('#currencyName').html('1 ' + result.data.currencies[0].name);
+					$('#currencySymbol').html(result.data.currencies[0].symbol);
+					$('#infoBox').prepend('<img id="flag" src="' + result.data.flag + '">');
+				};
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log(textStatus);
+			}
+		});
+	});
+
+	// get Wiki images for country info modal
 	$.ajax({
 		url: "php/getWikiImages.php",
 		type: 'POST',
@@ -288,8 +340,6 @@ $('#country-select').on('change', function () {
 				$('#carouselSlides').empty();
 				for (let i = 0; i < result.data.length; i++) {
 					let image = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + result.data[i];
-					console.log(image)
-					console.log(image)
 					if (i == 0) {
 						$('#carouselSlides').append('<div id="item' + i + '"class= "carousel-item active" ><img class="d-block w-100" src="' + image + '" alt="Image"> </div>');
 					}
@@ -308,7 +358,6 @@ $('#country-select').on('change', function () {
 							if (result.status.name == "ok") {
 								let num = Object.keys(result.data);
 								let longDesc = result.data[num].imageinfo[0].extmetadata.ImageDescription.value
-								console.log(longDesc);
 								let x = '#item' + i;
 								$(x).append('<figcaption >' + longDesc + '</figcaption><br>');
 							}
@@ -326,7 +375,7 @@ $('#country-select').on('change', function () {
 		}
 	}); 
 
-	// get Wiki summary API 
+	// get Wiki summary API for country info modal
 	$.ajax({
 		url: "php/getWikiSummary.php",
 		type: 'POST',
@@ -369,7 +418,8 @@ $('#country-select').on('change', function () {
 		default:
 			break;
     }
-	// get government info
+
+	// get government info WikiApi for country info modal
 	$('#govCard').show();
 	const settings = {
 		"async": true,
@@ -381,7 +431,6 @@ $('#country-select').on('change', function () {
 			"x-rapidapi-host": "wikiapi.p.rapidapi.com"
 		}
 	};
-
 	$.ajax(settings).done(function (response) {
 		// country info modal, government card
 		if (response.government) {
@@ -449,7 +498,8 @@ $('#country-select').on('change', function () {
 	}).fail(function () {
 		$('#govCard').hide();
 	});
-	// get population, health and money info WolframAlpha API
+
+	// get population, health and money info WolframAlpha API for country info modal and finance modal
 	$.ajax({
 		url: "php/getWolframAlpha.php",
 		type: 'POST',
@@ -593,7 +643,7 @@ $('#country-select').on('change', function () {
 						let index = healthUN.indexOf(': ');
 						let healthRank = healthUN.slice(index + 2, index + 7);
 						if (healthRank.includes(')')) {
-							healthRank = healthRank.slice(0, -1);
+							healthRank = healthRank.replace(')', '');
 						}
 						$('#healthRank').html(healthRank);
 					} else {
@@ -648,7 +698,7 @@ $('#country-select').on('change', function () {
 						let index = eduUN.indexOf('education');
 						let eduRank = eduUN.slice(index + 31, index + 36);
 						if (eduRank.includes(')')) {
-							eduRank = eduRank.slice(0, -1);
+							eduRank = eduRank.replace(')', '');
 						}
 						$('#eduRank').html(eduRank);
 					} else {
@@ -809,97 +859,119 @@ $('#country-select').on('change', function () {
 		}
 	}); 
 
-	// ipgeolocation astronomy API call for daylight info
-	$.ajax({
-		url: "php/getAstronomy.php",
-		type: 'POST',
-		dataType: 'json',
-		data: {
-			q: encCountryKey
-		},
-		success: function (result) {
-			if (result.status.name == "ok") {
-				$('#sunrise').html(result.data.sunrise);
-				$('#sunset').html(result.data.sunset);
-				$('#daylight').html(result.data.day_length);
+	//  Openweather api forcast for weather modal
+	latLngPromise.then((values) => {
+		$.ajax({
+			url: "php/getOpenWeatherForcast.php",
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				lat: lat,
+				lng: lng,
+			},
+			success: function (result) {
+				if (result.status.name == "ok") {
+					console.log(result)			
+					//current
+					let temp = Math.round(result.data.current.temp);
+					let desc = result.data.current.weather[0].description[0].toUpperCase() + result.data.current.weather[0].description.slice(1);
+					$('#wDesc').html(desc);
+					$('#countryTemp').html(temp + '&deg');
+					$('#wIconDiv').html('<img id="wImg" src="https://openweathermap.org/img/wn/' + result.data.current.weather[0].icon + '@2x.png">');
+					let high = Math.round(result.data.daily[0].temp.max);
+					let low = Math.round(result.data.daily[0].temp.min);
+					$('#high').html('H: ' + high + '&deg');
+					$('#low').html('L: ' + low + '&deg');
+					// sunrise and set
+					function getTime(timestamp) {
+						let date = new Date(timestamp * 1000);
+						let hours = '0' + date.getHours();
+						hours = hours.slice(-2);
+						let minutes = '0' + date.getMinutes();
+						minutes = minutes.slice(-2);
+						let formattedTime = hours + ':' + minutes;
+						return formattedTime;
+					}
+					function getTimeDiff(sunrise, sunset) {
+						let riseMins = parseInt(sunrise.slice(-2));
+						let setMins = parseInt(sunset.slice(-2));
+						let riseHours = parseInt(sunrise.substring(0, 2));
+						let setHours = parseInt(sunset.substring(0, 2));
+						if (riseMins > setMins) {
+							setMins += 60;
+							setHours -= 1; 
+						}
+						let diffMins = setMins - riseMins;
+						diffMins = '0' + diffMins.toString();
+						diffMins = diffMins.slice(-2);
+						let diffHours = setHours - riseHours;
+						diffHours = '0' + diffHours.toString();
+						diffHours = diffHours.slice(-2);
+						let formattedTimeDiff = diffHours + ':' + diffMins;
+						return formattedTimeDiff
+                    }
+					let sunrise = getTime(result.data.current.sunrise);
+					let sunset = getTime(result.data.current.sunset);
+					let daylight = getTimeDiff(sunrise, sunset);
+					$('#sunrise').html(sunrise);
+					$('#sunset').html(sunset);
+					$('#daylight').html(daylight);
+					// daily forcast
+					for (i = 1; i < result.data.daily.length; i++) {
+						let day = new Date(result.data.daily[i].dt * 1000).getDay();
+						switch (day) {
+							case 0:
+								day = "Sunday";
+								break;
+							case 1:
+								day = "Monday"
+								break;
+							case 2:
+								day = "Tuesday";
+								break;
+							case 3:
+								day = "Wednesday";
+								break;
+							case 4:
+								day = "Thursday";
+								break;
+							case 5:
+								day = "Friday";
+								break; 
+							case 6:
+								day = "Saturday";
+								break;
+						}
+						console.log(day);
+						let dayId = '#d' + [i] + 'Day';
+						$(dayId).html(day);
+						let iconID = '#d' + [i] + 'Icon';
+						$(iconID).html('<img class="wIconsSm" src="https://openweathermap.org/img/wn/' + result.data.daily[i].weather[0].icon + '.png">');
+						let rainID = '#d' + [i] + 'Rain';
+						let pop = parseInt(result.data.daily[i].pop * 100);
+						if (pop > 0) {
+							$(rainID).html(pop + '%');
+						}
+						let hiId = '#d' + [i] + 'Hi';
+						let lowId = '#d' + [i] + 'Low';
+						let high = Math.round(result.data.daily[i].temp.max);
+						let low = Math.round(result.data.daily[i].temp.min);
+						$(hiId).html(high + '&deg');
+						$(lowId).html(low + '&deg');
+					
+
+					}
+
+
+
+
+				};
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log(textStatus);
 			}
-		},
-		error: function (jqXHR, textStatus, errorThrown) {
-			console.log(textStatus);
-		}
-	}); 
-
-	// OpenWeatherMap API call
-	$.ajax({
-		url: "php/getOpenWeather.php",
-		type: 'POST',
-		dataType: 'json',
-		data: {
-			q: encCountryKey
-		},
-		success: function (result) {
-			if (result.status.name == "ok") {
-				if (result.data.cod == 404) {
-					map.removeControl(weatherBox);
-				} else {
-					let temp = Math.round(result.data.main.temp);
-					$('#wDesc').html(result.data.weather[0].description);
-					$('#countryTemp').html(	 + '<sup>&#8451</sup>');
-					$('#wBox').prepend('<img id="wImg" src="https://openweathermap.org/img/wn/' + result.data.weather[0].icon + '@2x.png">');
-				}; 
-			};
-		},
-		error: function (jqXHR, textStatus, errorThrown) {
-			console.log(textStatus);
-		}
-	}); 
-
-	// OpenCage Forward call for country information
-	$.ajax({
-		url: "php/getOpenCageF.php",
-		type: 'POST',
-		dataType: 'json',
-		data: {
-			cc: this.value,
-			q: encCountryKey
-		},
-		success: function (result) {
-			if (result.status.name == "ok") {
-				let dt = DateTime.fromObject({ zone: result.data[0].annotations.timezone.name })
-				let localTime = dt.toLocaleString(DateTime.DATETIME_MED)
-				let split = localTime.split(', ');
-				$('#countryName').html(result.data[0].components.country);
-				$('#localTime').html(split[2]);
-			}
-		},
-		error: function (jqXHR, textStatus, errorThrown) {
-			console.log(textStatus);
-		}
+		});
 	});
-
-	// Rest countries API call 
-	$.ajax({
-		url: "php/getRest.php",
-		type: 'POST',
-		dataType: 'json',
-		data: {
-			cc: this.value,
-		},
-		success: function (result) {
-			if (result.status.name == "ok") {
-				// Rest countries outputs here 
-				$('#capital').html(result.data.capital); 
-				console.log(result.data.capital)
-				$('#currencyName').html('1 ' + result.data.currencies[0].name);
-				$('#currencySymbol').html(result.data.currencies[0].symbol);
-				$('#infoBox').prepend('<img id="flag" src="' + result.data.flag + '">');
-			};
-		},
-		error: function (jqXHR, textStatus, errorThrown) {
-			console.log(textStatus);
-		}
-	});
-
 	// World geodata cities API and Wiki search API on popup click
 	let cityArray = [];
 	let citiesPromise = new Promise((resolve, reject) => {
@@ -1826,7 +1898,6 @@ $('#country-select').on('change', function () {
 				"Snow": snow,
 			};
         }
-		console.log('in');
 		let overlays = L.control.layers({}, overlayMaps).addTo(map);
 		$('.city-layer-item').parent().parent().prepend('<b>Places:</b><br>');
 		$('.transport-layer-item').parent().parent().prepend('<b>Transport:</b><br>');

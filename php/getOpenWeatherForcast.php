@@ -2,7 +2,7 @@
 
 	$executionStartTime = microtime(true) / 1000;
 
-	$url='https://api.openweathermap.org/data/2.5/weather?appid=1d748ca6a042143ce4ca0a612a95acf5&units=metric&q=' . $_REQUEST['q'] ;
+	$url='https://api.openweathermap.org/data/2.5/onecall?appid=1d748ca6a042143ce4ca0a612a95acf5&exclude=hourly,minutely,alerts&units=metric&lat=' . $_REQUEST['lat'] . '&lon=' . $_REQUEST['lng'];
 	
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);

@@ -31,6 +31,33 @@ html, body, #spinnerDiv {
     background-color: #f4f4f4;
 }
 
+#countryTemp {
+        font-size: 3em;
+}
+
+#high, #low {
+    font-size: 1.5em;
+}
+.h50 {
+    height: 50%;
+    display: flex;
+}
+
+.h50 span, .h50 img {
+       align-self: center;
+       margin: 0 auto;
+
+    }
+
+#sunriseRow {
+    background-color: wheat;
+}
+
+#wImg {
+    height: 140px;
+    width: 140px;
+}
+
 .info, .weatherBox, .news, .finance {
     cursor: pointer !important;
     position: relative;
@@ -40,7 +67,6 @@ html, body, #spinnerDiv {
     border-radius: 30px;
     overflow: hidden;
     background: rgba(244,244,244,0.8)
-
 }
 
 figcaption {
@@ -60,7 +86,7 @@ figcaption {
     border-radius: 30px;
     margin: 2px;
 }
-#weatherIconDiv {
+#weatherIconDiv, #currentRow {
     background-color: rgba(137, 196, 244, 0.5);
 }
 #financeIconDiv {
