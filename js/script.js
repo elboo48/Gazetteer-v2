@@ -134,6 +134,7 @@ function numberWithCommas(x) {
 $('#country-select').on('change', function () {
 	//NEED TO REVIEW FOR REDUNDANT 
 	$('#spinner').show();
+	let done = false;
 	$('.leaflet-control-layers-selector').prop('checked', false); 
 	$('.leaflet-control-layers-toggle').remove();
 	$('div.leaflet-pane.leaflet-map-pane.div.leaflet-pane.leaflet-marker-pane').empty();
@@ -149,8 +150,16 @@ $('#country-select').on('change', function () {
 	$('div.leaflet-control-layers.leaflet-control').remove();
 	// DO WITH REST
 	$('#pop').empty();  
+		let toggleArray = [];
 
-	let toggleArray = [];
+	// get select key data for API calls
+	function getKeyByValue(object, value) {
+		return Object.keys(object).find(key =>
+			object[key] === value);
+	}
+	countryKey = getKeyByValue(jArr, this.value);
+	let encCountryKey = encodeURIComponent(countryKey)
+	console.log(encCountryKey)
 
 	// map draw boundary and shuffle using bounds
 	let jsonBoundsData = $.ajax({
@@ -187,11 +196,7 @@ $('#country-select').on('change', function () {
 			};	
 	info.addTo(map);
 
-	// launch country modal on click 
-	$('.info').click(function (event) {
-		$('#countryModal').modal('toggle');
-	});
-
+	
 	// draw weather button box and populate
 	let weatherBox = L.control({ position: 'topleft' });
 	weatherBox.onAdd = function (map) {
@@ -203,11 +208,6 @@ $('#country-select').on('change', function () {
 		this._div.innerHTML = '<div id="weatherIconDiv"><i class="fas fa-cloud-sun fa-2x"></i></div>' 	
 	};
 	weatherBox.addTo(map);
-
-	// launch weather modal on click 
-	$('.weatherBox').click(function (event) {
-		$('#weatherModal').modal('toggle');
-	});
 
 	// draw news button box and populate
 	let news = L.control({ position: 'topleft' });
@@ -224,6 +224,46 @@ $('#country-select').on('change', function () {
 	// launch news modal on click 
 	$('.news').click(function (event) {
 		$('#newsModal').modal('toggle');
+		$('#spinner').show();
+		// get news about country for news modal 
+		const settings = {
+			"async": true,
+			"crossDomain": true,
+			"url": "https://contextualwebsearch-websearch-v1.p.rapidapi.com/api/search/NewsSearchAPI?q=" + encCountryKey + "&pageNumber=1&pageSize=10&autoCorrect=true&withThumbnails=true&fromPublishedDate=null&toPublishedDate=null",
+			"method": "GET",
+			"headers": {
+				"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
+				"x-rapidapi-host": "contextualwebsearch-websearch-v1.p.rapidapi.com"
+			}
+		};
+		$.ajax(settings).done(function (response) {
+			console.log(response);
+			$('#spinner').hide();
+			for (let i = 0; i < response.value.length; i++) {
+				$('#newsCard' + [i]).show();
+				$('#nIconDiv' + [i]).empty();
+				let bool = response.value[i].provider.name.includes('job');
+				if (!bool) {
+					date = response.value[i].datePublished.substring(5, 10);
+					let day = date.slice(-2);
+					let month = date.slice(0, 2);
+					date = day + '/' + month
+					let story = response.value[i].body;
+					let reg = /\r?\n/g
+					story = story.replaceAll(reg, '<br><br>')
+					$('#nIconDiv' + [i]).append('<img alt="news Image" src="' + response.value[i].image.thumbnail + '" style="max-width: 150px">');
+					$('#nTitle' + [i]).html(response.value[i].title);
+					$('#nDesc' + [i]).html(response.value[i].description)
+					$('#nSource' + [i]).html('<a href="' + response.value[i].url + '" target="_blank">' + response.value[i].provider.name + '</a>');
+					$('#nStory' + [i]).html(story);
+					$('#nDate' + [i]).html(date);
+				}
+				else {
+					$('#newsCard' + [i]).hide();
+                }
+            }
+		});
+
 	});
 
 	// draw finance button box and populate
@@ -237,11 +277,6 @@ $('#country-select').on('change', function () {
 		this._div.innerHTML = '<div id="financeIconDiv"><i class="fas fa-coins fa-2x"></i></div>'
 	};
 	finance.addTo(map);
-
-	// launch news modal on click 
-	$('.finance').click(function (event) {
-		$('#financeModal').modal('toggle');
-	});
 
 	// add function to weather checkboxes and call legend adjust functions to avoid attribution overlap on small devices
 	$('#clouds').change(function () {
@@ -267,13 +302,21 @@ $('#country-select').on('change', function () {
 		};
 	});
 	
-	// get select key data for API call
-	function getKeyByValue(object, value) {
-		return Object.keys(object).find(key =>
-			object[key] === value);
-	}
-	countryKey = getKeyByValue(jArr, this.value);
-	let encCountryKey = encodeURIComponent(countryKey)
+	// launch country modal on click 
+	$('.info').click(function (event) {
+		$('#countryModal').modal('toggle');
+		if (!done) {
+			$('#spinner').show();
+		};
+	});
+
+	// launch finance modal on click 
+	$('.finance').click(function (event) {
+		$('#financeModal').modal('toggle');
+		if (!done) {
+			$('#spinner').show();
+		};
+	});
 
 	// OpenCage Forward call for country information for country info modal
 	$.ajax({
@@ -298,7 +341,7 @@ $('#country-select').on('change', function () {
 		}
 	});
 
-	// Rest countries API call for currency info for finance modal
+		// Rest countries API call for currency info for finance modal
 	let lat;
 	let lng;
 	let latLngPromise = new Promise((resolve, reject) => {
@@ -395,6 +438,8 @@ $('#country-select').on('change', function () {
 			console.log(textStatus);
 		}
 	}); 
+
+	// get government info WikiApi for country info modal
 	let lowerCountry = countryKey.toLowerCase();
 	lowerCountry = lowerCountry.replaceAll(' ', '_');
 	lowerCountry = lowerCountry.replaceAll('-', '_')
@@ -417,9 +462,7 @@ $('#country-select').on('change', function () {
 
 		default:
 			break;
-    }
-
-	// get government info WikiApi for country info modal
+	}
 	$('#govCard').show();
 	const settings = {
 		"async": true,
@@ -499,7 +542,7 @@ $('#country-select').on('change', function () {
 		$('#govCard').hide();
 	});
 
-	// get population, health and money info WolframAlpha API for country info modal and finance modal
+	// get population, health and finance info WolframAlpha API for country info modal and finance modal
 	$.ajax({
 		url: "php/getWolframAlpha.php",
 		type: 'POST',
@@ -509,6 +552,8 @@ $('#country-select').on('change', function () {
 		},
 		success: function (result) {
 			if (result.status.name == "ok") {
+				done = true; 
+				$('#spinner').hide();
 				let pods = {};
 				for (let i = 0; i < result.data.queryresult.pods.length; i++) {
 					let title = result.data.queryresult.pods[i].title
@@ -859,119 +904,119 @@ $('#country-select').on('change', function () {
 		}
 	}); 
 
-	//  Openweather api forcast for weather modal
-	latLngPromise.then((values) => {
-		$.ajax({
-			url: "php/getOpenWeatherForcast.php",
-			type: 'POST',
-			dataType: 'json',
-			data: {
-				lat: lat,
-				lng: lng,
-			},
-			success: function (result) {
-				if (result.status.name == "ok") {
-					console.log(result)			
-					//current
-					let temp = Math.round(result.data.current.temp);
-					let desc = result.data.current.weather[0].description[0].toUpperCase() + result.data.current.weather[0].description.slice(1);
-					$('#wDesc').html(desc);
-					$('#countryTemp').html(temp + '&deg');
-					$('#wIconDiv').html('<img id="wImg" src="https://openweathermap.org/img/wn/' + result.data.current.weather[0].icon + '@2x.png">');
-					let high = Math.round(result.data.daily[0].temp.max);
-					let low = Math.round(result.data.daily[0].temp.min);
-					$('#high').html('H: ' + high + '&deg');
-					$('#low').html('L: ' + low + '&deg');
-					// sunrise and set
-					function getTime(timestamp) {
-						let date = new Date(timestamp * 1000);
-						let hours = '0' + date.getHours();
-						hours = hours.slice(-2);
-						let minutes = '0' + date.getMinutes();
-						minutes = minutes.slice(-2);
-						let formattedTime = hours + ':' + minutes;
-						return formattedTime;
-					}
-					function getTimeDiff(sunrise, sunset) {
-						let riseMins = parseInt(sunrise.slice(-2));
-						let setMins = parseInt(sunset.slice(-2));
-						let riseHours = parseInt(sunrise.substring(0, 2));
-						let setHours = parseInt(sunset.substring(0, 2));
-						if (riseMins > setMins) {
-							setMins += 60;
-							setHours -= 1; 
+
+	// launch weather modal on click 
+	$('.weatherBox').click(function (event) {
+		$('#weatherModal').modal('toggle');
+		$('#spinner').show()
+		//  Openweather api forcast for weather modal
+		latLngPromise.then((values) => {
+			$.ajax({
+				url: "php/getOpenWeatherForcast.php",
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					lat: lat,
+					lng: lng,
+				},
+				success: function (result) {
+					if (result.status.name == "ok") {
+						$('#spinner').hide();
+						//current
+						let temp = Math.round(result.data.current.temp);
+						let desc = result.data.current.weather[0].description[0].toUpperCase() + result.data.current.weather[0].description.slice(1);
+						$('#wDesc').html(desc);
+						$('#countryTemp').html(temp + '&deg');
+						$('#wIconDiv').html('<img id="wImg" src="https://openweathermap.org/img/wn/' + result.data.current.weather[0].icon + '@2x.png">');
+						let high = Math.round(result.data.daily[0].temp.max);
+						let low = Math.round(result.data.daily[0].temp.min);
+						$('#high').html('H: ' + high + '&deg');
+						$('#low').html('L: ' + low + '&deg');
+						// sunrise and set
+						function getTime(timestamp) {
+							let date = new Date(timestamp * 1000);
+							let hours = '0' + date.getHours();
+							hours = hours.slice(-2);
+							let minutes = '0' + date.getMinutes();
+							minutes = minutes.slice(-2);
+							let formattedTime = hours + ':' + minutes;
+							return formattedTime;
 						}
-						let diffMins = setMins - riseMins;
-						diffMins = '0' + diffMins.toString();
-						diffMins = diffMins.slice(-2);
-						let diffHours = setHours - riseHours;
-						diffHours = '0' + diffHours.toString();
-						diffHours = diffHours.slice(-2);
-						let formattedTimeDiff = diffHours + ':' + diffMins;
-						return formattedTimeDiff
-                    }
-					let sunrise = getTime(result.data.current.sunrise);
-					let sunset = getTime(result.data.current.sunset);
-					let daylight = getTimeDiff(sunrise, sunset);
-					$('#sunrise').html(sunrise);
-					$('#sunset').html(sunset);
-					$('#daylight').html(daylight);
-					// daily forcast
-					for (i = 1; i < result.data.daily.length; i++) {
-						let day = new Date(result.data.daily[i].dt * 1000).getDay();
-						switch (day) {
-							case 0:
-								day = "Sunday";
-								break;
-							case 1:
-								day = "Monday"
-								break;
-							case 2:
-								day = "Tuesday";
-								break;
-							case 3:
-								day = "Wednesday";
-								break;
-							case 4:
-								day = "Thursday";
-								break;
-							case 5:
-								day = "Friday";
-								break; 
-							case 6:
-								day = "Saturday";
-								break;
+						function getTimeDiff(sunrise, sunset) {
+							let riseMins = parseInt(sunrise.slice(-2));
+							let setMins = parseInt(sunset.slice(-2));
+							let riseHours = parseInt(sunrise.substring(0, 2));
+							let setHours = parseInt(sunset.substring(0, 2));
+							if (riseMins > setMins) {
+								setMins += 60;
+								setHours -= 1; 
+							}
+							let diffMins = setMins - riseMins;
+							diffMins = '0' + diffMins.toString();
+							diffMins = diffMins.slice(-2);
+							let diffHours = setHours - riseHours;
+							diffHours = '0' + diffHours.toString();
+							diffHours = diffHours.slice(-2);
+							let formattedTimeDiff = diffHours + ':' + diffMins;
+							return formattedTimeDiff
 						}
-						console.log(day);
-						let dayId = '#d' + [i] + 'Day';
-						$(dayId).html(day);
-						let iconID = '#d' + [i] + 'Icon';
-						$(iconID).html('<img class="wIconsSm" src="https://openweathermap.org/img/wn/' + result.data.daily[i].weather[0].icon + '.png">');
-						let rainID = '#d' + [i] + 'Rain';
-						let pop = parseInt(result.data.daily[i].pop * 100);
-						if (pop > 0) {
-							$(rainID).html(pop + '%');
+						let sunrise = getTime(result.data.current.sunrise);
+						let sunset = getTime(result.data.current.sunset);
+						let daylight = getTimeDiff(sunrise, sunset);
+						$('#sunrise').html(sunrise);
+						$('#sunset').html(sunset);
+						$('#daylight').html(daylight);
+						// daily forcast
+						for (i = 1; i < result.data.daily.length; i++) {
+							let day = new Date(result.data.daily[i].dt * 1000).getDay();
+							switch (day) {
+								case 0:
+									day = "Sunday";
+									break;
+								case 1:
+									day = "Monday"
+									break;
+								case 2:
+									day = "Tuesday";
+									break;
+								case 3:
+									day = "Wednesday";
+									break;
+								case 4:
+									day = "Thursday";
+									break;
+								case 5:
+									day = "Friday";
+									break; 
+								case 6:
+									day = "Saturday";
+									break;
+							}
+							let dayId = '#d' + [i] + 'Day';
+							$(dayId).html(day);
+							let iconID = '#d' + [i] + 'Icon';
+							$(iconID).html('<img class="wIconsSm" src="https://openweathermap.org/img/wn/' + result.data.daily[i].weather[0].icon + '.png">');
+							let rainID = '#d' + [i] + 'Rain';
+							let pop = parseInt(result.data.daily[i].pop * 100);
+							if (pop > 0) {
+								$(rainID).html(pop + '%');
+							}
+							let hiId = '#d' + [i] + 'Hi';
+							let lowId = '#d' + [i] + 'Low';
+							let high = Math.round(result.data.daily[i].temp.max);
+							let low = Math.round(result.data.daily[i].temp.min);
+							$(hiId).html(high + '&deg');
+							$(lowId).html(low + '&deg');
 						}
-						let hiId = '#d' + [i] + 'Hi';
-						let lowId = '#d' + [i] + 'Low';
-						let high = Math.round(result.data.daily[i].temp.max);
-						let low = Math.round(result.data.daily[i].temp.min);
-						$(hiId).html(high + '&deg');
-						$(lowId).html(low + '&deg');
-					
-
-					}
-
-
-
-
 				};
-			},
-			error: function (jqXHR, textStatus, errorThrown) {
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
 				console.log(textStatus);
-			}
+				}
+			});
 		});
 	});
+	
 	// World geodata cities API and Wiki search API on popup click
 	let cityArray = [];
 	let citiesPromise = new Promise((resolve, reject) => {
