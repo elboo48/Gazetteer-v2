@@ -159,8 +159,7 @@ $('#country-select').on('change', function () {
 	}
 	countryKey = getKeyByValue(jArr, this.value);
 	let encCountryKey = encodeURIComponent(countryKey)
-	console.log(encCountryKey)
-
+	
 	// map draw boundary and shuffle using bounds
 	let jsonBoundsData = $.ajax({
 		url: "php/getBorders.php",
@@ -237,7 +236,6 @@ $('#country-select').on('change', function () {
 			}
 		};
 		$.ajax(settings).done(function (response) {
-			console.log(response);
 			$('#spinner').hide();
 			for (let i = 0; i < response.value.length; i++) {
 				$('#newsCard' + [i]).show();
@@ -341,7 +339,7 @@ $('#country-select').on('change', function () {
 		}
 	});
 
-		// Rest countries API call for currency info for finance modal
+	// Rest countries API call for currency info for finance modal
 	let lat;
 	let lng;
 	let latLngPromise = new Promise((resolve, reject) => {
@@ -370,6 +368,8 @@ $('#country-select').on('change', function () {
 		});
 	});
 
+	console.log(encCountryKey)
+
 	// get Wiki images for country info modal
 	$.ajax({
 		url: "php/getWikiImages.php",
@@ -381,15 +381,27 @@ $('#country-select').on('change', function () {
 		success: function (result) {
 			if (result.status.name == "ok") {
 				$('#carouselSlides').empty();
-				for (let i = 0; i < result.data.length; i++) {
-					let image = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + result.data[i];
+				let imageUrls = [];
+				let num = Object.keys(result.data.query.pages);
+				num = num[0]
+				let data = result.data.query.pages[num]
+				for (let i = 0; i < data.images.length; i++) {
+					let title = data.images[i].title;
+					if (!title.includes('.svg') && !title.includes('.png') && !title.includes('.ogg')) {
+						title = title.replace('File:', '');
+						title = title.replaceAll(' ', '_');
+						imageUrls.push(title);
+					}
+				}
+				for (let i = 0; i < imageUrls.length; i++) {
+					let image = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + imageUrls[i];
 					if (i == 0) {
 						$('#carouselSlides').append('<div id="item' + i + '"class= "carousel-item active" ><img class="d-block w-100" src="' + image + '" alt="Image"> </div>');
 					}
 					else {
 						$('#carouselSlides').append('<div id="item' + i + '"class= "carousel-item" ><img class="d-block w-100" src="' + image + '" alt="Image"  > </div>');
 					}
-					let encImage = encodeURIComponent(result.data[i]);
+					let encImage = encodeURIComponent(imageUrls[i]);
 					$.ajax({
 						url: "php/getWikiCaption.php",
 						type: 'POST',
@@ -406,7 +418,9 @@ $('#country-select').on('change', function () {
 							}
 						},
 						error: function (jqXHR, textStatus, errorThrown) {
-							console.log(textStatus);
+							let errorMessage = jqXHR.status + ': ' + jqXHR.statusText
+								console.log('Error - ' + errorMessage);
+						
 						}
 					}); 
 				}
@@ -414,7 +428,9 @@ $('#country-select').on('change', function () {
 			}
 		},
 		error: function (jqXHR, textStatus, errorThrown) {
-			console.log(textStatus);
+			let errorMessage = jqXHR.status + ': ' + jqXHR.statusText + ': ' + jqXHR.responseText 
+			console.log('Error - ' + errorMessage);
+
 		}
 	}); 
 
