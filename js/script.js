@@ -124,6 +124,7 @@ let libCluster;
 let trainCluster;
 let metroCluster;
 let busCluster;
+let camCluster;
 
 // thousand comma function
 function numberWithCommas(x) {
@@ -367,8 +368,6 @@ $('#country-select').on('change', function () {
 			}
 		});
 	});
-
-	console.log(encCountryKey)
 
 	// get Wiki images for country info modal
 	$.ajax({
@@ -920,7 +919,6 @@ $('#country-select').on('change', function () {
 		}
 	}); 
 
-
 	// launch weather modal on click 
 	$('.weatherBox').click(function (event) {
 		$('#weatherModal').modal('toggle');
@@ -1032,7 +1030,88 @@ $('#country-select').on('change', function () {
 			});
 		});
 	});
-	
+
+	// livestream webcams API 
+	let camArray = [];
+	let camsPromise = new Promise((resolve, reject) => {
+		$.ajax({
+			url: "php/getLivestreams.php",
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				cc: this.value,
+			},
+			success: function (result) {
+				if (result.status.name == "ok") {
+					console.log(result)
+					if (camCluster) {
+						map.removeLayer(camCluster);
+					}
+					for (i = 0; i < result.data.length; i++) {
+						// create city markers and put in array
+						let content = $('<div id="cam' + [i] +'"></div>');
+						content.html('<img id="webcamImg" src="' + result.data[i].image.daylight.preview + '" alt="Webcam image" style="width:100%"></div><b id="camTitle">' + result.data[i].title + '</b>'); 
+						obj = L.marker([result.data[i].location.latitude, result.data[i].location.longitude], {
+							icon: L.BeautifyIcon.icon({
+								icon: 'fas fa-video',
+								borderColor: 'rgba(255,255,255, 0.4)',
+								backgroundColor: 'rgba(3, 166, 120, 1)',
+								textColor: 'rgba(255,255,255, 1)'
+							})
+						})
+						.on('click', onCamClick);	
+						$('#webcamImg').css({ "display": "block", "opacity": "1", "object-fit": "cover", "border": "1px solid lightgrey", "margin-bottom": "5px", "border-radius": "4px" });
+						let stream = 'https://webcams.windy.com/webcams/stream/' + result.data[i].id;
+
+						//linkToUrl.com/script.js
+
+						let title = result.data[i].title
+						function onCamClick(e) {
+							$('#webcamTitle').html(title);
+							$.ajax({
+								url: "php/getStream.php",
+								data: {
+									stream: stream
+								},
+								success: function (result) {
+									console.log(result)
+									if (result.includes('https')) {
+										$('#camURL').html('<iframe src="' + stream + '" frameBorder="0" scrolling="no"  height="330px" width="100%"></iframe>');
+										$('#camsModal').modal('toggle');
+									} else {
+										window.open(result, "", "width=700,height=500");
+                                    }
+										
+									
+								},
+								error: function (jqXHR, textStatus, errorThrown) {
+									console.log(textStatus);
+								}
+							}); 
+
+							
+						}
+						camArray.push(obj);
+						
+					}
+					
+					// creat cities cluster layer and put into easy button
+					cams = new L.layerGroup(camArray);
+					camCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+					camCluster.addLayer(cams);
+					camCluster.addTo(map);
+					addToBar(camCluster, 'camCluster');
+					resolve('foo');
+				}
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log(textStatus);
+			}
+		});
+	});
+
+
+
 	// World geodata cities API and Wiki search API on popup click
 	let cityArray = [];
 	let citiesPromise = new Promise((resolve, reject) => {
@@ -1922,7 +2001,7 @@ $('#country-select').on('change', function () {
 	}
 
 	// once all buttons completed, add to a bar and display on map
-	Promise.all([libPromise, citiesPromise, capitalPromise, hospPromise, musPromise, thrPromise, uniPromise, trainPromise, metroPromise, busPromise]).then((values) => {
+	Promise.all([libPromise, camsPromise, citiesPromise, capitalPromise, hospPromise, musPromise, thrPromise, uniPromise, trainPromise, metroPromise, busPromise]).then((values) => {
 		let overlayMaps = {};
 		if (toggleArray['capitalObj']) {
 			overlayMaps = {
@@ -1937,6 +2016,7 @@ $('#country-select').on('change', function () {
 				"Train stations": toggleArray['trainCluster'],
 				"Metro stations": toggleArray['metroCluster'],
 				"Bus stations": toggleArray['busCluster'],
+				"<span class='webcams-layer-item'>Live webcams</span>": toggleArray['camCluster'],
 				"<span class='clouds-layer-item'>Clouds</span>": clouds,
 				"Rain": rain,
 				"Snow": snow,
@@ -1954,6 +2034,7 @@ $('#country-select').on('change', function () {
 				"Train stations": toggleArray['trainCluster'],
 				"Metro stations": toggleArray['metroCluster'],
 				"Bus stations": toggleArray['busCluster'],
+				"<span class='webcams-layer-item'>Live webcams</span>": toggleArray['camCluster'],
 				"<span class='clouds-layer-item'>Clouds</span>": clouds,
 				"Rain": rain,
 				"Snow": snow,
@@ -1962,29 +2043,9 @@ $('#country-select').on('change', function () {
 		let overlays = L.control.layers({}, overlayMaps).addTo(map);
 		$('.city-layer-item').parent().parent().prepend('<b>Places:</b><br>');
 		$('.transport-layer-item').parent().parent().prepend('<b>Transport:</b><br>');
+		$('.webcams-layer-item').parent().parent().prepend('<b>Webcams:</b><br>');
 		$('.clouds-layer-item').parent().parent().prepend('<b>Weather:</b><br>')
 		$('#spinner').hide();
 	});	
 
 });
-
-// create a div to hold all the checkboxes for layers. on click it turns into a bigger fixed size div... just like ore try to amend html of leaflet-control-layers-expanded
-
-
-
-
-/*   
- *   
- *   
- *   
-let selectBox = L.control({ position: 'tophorizontalcenter' });
-selectBox.onAdd = function (map) {
-	this._div = L.DomUtil.create('div', 'selectBox');
-	this.update();
-	return this._div;
-};
-selectBox.update = function (x) {
-	this._div.innerHTML = '<select id="country-select" name="country"><option selected value="">Pick a country</option></select></p >'
-};
-selectBox.addTo(map); */
-// {"<img src='my-layer-icon' />  myLayer}
