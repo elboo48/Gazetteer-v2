@@ -45,7 +45,7 @@
 
         iconSize: {
             'marker': [28, 28]
-            , 'circle': [22, 22]
+            , 'circle': [28, 28]
             , 'circle-dot': [2, 2]
             , 'rectangle-dot': [2, 2]
             , 'doughnut': [15, 15]
@@ -62,7 +62,7 @@
                , iconAnchor: defaults.iconAnchor.circle
                , iconShape: 'circle'
                , iconStyle: ''
-               , innerIconAnchor: [0, 3] // circle with fa or glyphicon or marker with text
+               , innerIconAnchor: [0, 6] // circle with fa or glyphicon or marker with text
                , innerIconStyle: ''
                , isAlphaNumericIcon: false
                , text: 1
