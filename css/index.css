@@ -35,10 +35,9 @@ html, body, #spinnerDiv {
 }
 
 #countryTemp {
-        font-size: 3em;
+    font-size: 4em;
 }
-
-#high, #low {
+#high, #low, #wDesc {
     font-size: 1.5em;
 }
 .h50 {
@@ -46,19 +45,32 @@ html, body, #spinnerDiv {
     display: flex;
 }
 
+.float-right {
+    text-align: right;
+}
 .h50 span, .h50 img {
        align-self: center;
        margin: 0 auto;
-
     }
 
+.wHead {
+    height: 100px;
+}
 #sunriseRow {
     background-color: wheat;
 }
-
+.low {
+    opacity: 0.6;
+}
+.rain {
+    font-size: 0.9rem;
+    color: rgba(137, 196, 244, 0.8);
+}
 #wImg {
-    height: 140px;
-    width: 140px;
+    height: 100px;
+    width: 100px;
+    margin: 0 auto;
+    align-self: center;
 }
 
 .info, .weatherBox, .news, .finance {
@@ -109,6 +121,22 @@ figcaption {
     position: absolute;
     left: -30px;
     top: -1px;
+}
+
+#flagCH {
+    opacity: 0.5;
+    height: 56px;
+    position: absolute;
+    left: -2px;
+    top: -1px;
+}
+
+#flagNP {
+    opacity: 0.5;
+    height: 56px;
+    position: absolute;
+    left: 12px;
+    top: -2px;
 }
 
 .leaflet-control-zoom {

@@ -34,7 +34,7 @@ let map = L.map('mapid', {
 // initialise attribution 
 L.control.attribution({
 	position: 'bottomleft'
-}).addTo(map);
+}).addTo(map); 
 
 // add basemaps control
 map.addControl(L.control.basemaps({
@@ -133,9 +133,9 @@ function numberWithCommas(x) {
 
 // select event leading to API calls and map shift
 $('#country-select').on('change', function () {
-	//NEED TO REVIEW FOR REDUNDANT 
 	$('#spinner').show();
 	let done = false;
+	//NEED TO REVIEW FOR REDUNDANT 
 	$('.leaflet-control-layers-selector').prop('checked', false); 
 	$('.leaflet-control-layers-toggle').remove();
 	$('div.leaflet-pane.leaflet-map-pane.div.leaflet-pane.leaflet-marker-pane').empty();
@@ -149,10 +149,19 @@ $('#country-select').on('change', function () {
 	$('#airports-marker-toggle').parent().remove();
 	$('#lib-marker-toggle').parent().remove();
 	$('div.leaflet-control-layers.leaflet-control').remove();
-	// DO WITH REST
-	$('#pop').empty();  
-		let toggleArray = [];
-
+	// hiding modal elements while reloading
+	$('#newsAccordion').hide(); 
+	$('#gdpCard').hide();
+	$('#employmentCard').hide();
+	$('#currencyCard').hide();
+	$('#businessCard').hide();
+	$('#govCard').hide();
+	$('#popCard').hide();
+	$('#healthCard').hide();
+	$('#eduCard').hide();
+	$('#weatherBody').hide()
+	// set up array for layers
+	let toggleArray = [];
 	// get select key data for API calls
 	function getKeyByValue(object, value) {
 		return Object.keys(object).find(key =>
@@ -160,7 +169,7 @@ $('#country-select').on('change', function () {
 	}
 	countryKey = getKeyByValue(jArr, this.value);
 	let encCountryKey = encodeURIComponent(countryKey)
-	
+	$('#countryName').html(countryKey);
 	// map draw boundary and shuffle using bounds
 	let jsonBoundsData = $.ajax({
 		url: "php/getBorders.php",
@@ -238,6 +247,7 @@ $('#country-select').on('change', function () {
 		};
 		$.ajax(settings).done(function (response) {
 			$('#spinner').hide();
+			$('#newsAccordion').show();
 			for (let i = 0; i < response.value.length; i++) {
 				$('#newsCard' + [i]).show();
 				$('#nIconDiv' + [i]).empty();
@@ -277,14 +287,33 @@ $('#country-select').on('change', function () {
 	};
 	finance.addTo(map);
 
-	// add function to weather checkboxes and call legend adjust functions to avoid attribution overlap on small devices
+	function leg_bottom_adjust() {
+		let w = parseInt(window.innerWidth);
+		console.log(w)
+		if (w <= 490) {
+			$(".leaflet-bottom.").css({ "bottom": "17px" });
+		} else if (w > 490 && w <= 730) {
+			$(".leaflet-bottom").css({ "bottom": "5px" });
+		} else {
+			$(".leaflet-bottom").css({ "bottom": "0" });
+		}
+	};
+	function leg_bottom_undo() {
+		let w = parseInt(window.innerWidth);
+		if (w <= 307) {
+			$(".leaflet-bottom.leaflet-right").css({ "bottom": "5px" });
+		} else if (w > 307) {
+			$(".leaflet-bottom.leaflet-right").css({ "bottom": "0" });
+		}
+	};
+	// add function to weather checkboxes and avoid attribution overlap on small devices
 	$('#clouds').change(function () {
 		if ($(this).is(':checked')) {
 			clouds.addTo(map);
-			leg_bottom_adjust(); 
+			leg_bottom_adjust()
 		} else {
 			map.removeLayer(clouds);
-			if (!$('#rain').is(':checked')) {
+			if (!$('#rain').is(':checked') && !$('#snow').is(':checked')) {
 				leg_bottom_undo()
 			};
 		};
@@ -295,12 +324,23 @@ $('#country-select').on('change', function () {
 			leg_bottom_adjust()
 		} else {
 			map.removeLayer(rain);
-			if (!$('#clouds').is(':checked') ) {
+			if (!$('#clouds').is(':checked') && !$('#snow').is(':checked') ) {
 				leg_bottom_undo() 
 			};	
 		};
 	});
-	
+	$('#snow').change(function () {
+		if ($(this).is(':checked')) {
+			snow.addTo(map);
+			leg_bottom_adjust()
+		} else {
+			map.removeLayer(snow);
+			if (!$('#clouds').is(':checked') && !$('#rain').is(':checked')) {
+				leg_bottom_undo()
+			};
+		};
+	});
+
 	// launch country modal on click 
 	$('.info').click(function (event) {
 		$('#countryModal').modal('toggle');
@@ -317,29 +357,6 @@ $('#country-select').on('change', function () {
 		};
 	});
 
-	// OpenCage Forward call for country information for country info modal
-	$.ajax({
-		url: "php/getOpenCageF.php",
-		type: 'POST',
-		dataType: 'json',
-		data: {
-			cc: this.value,
-			q: encCountryKey
-		},
-		success: function (result) {
-			if (result.status.name == "ok") {
-				let dt = DateTime.fromObject({ zone: result.data[0].annotations.timezone.name })
-				let localTime = dt.toLocaleString(DateTime.DATETIME_MED)
-				let split = localTime.split(', ');
-				$('#countryName').html(result.data[0].components.country);
-				$('#localTime').html(split[2]);
-			}
-		},
-		error: function (jqXHR, textStatus, errorThrown) {
-			console.log(textStatus);
-		}
-	});
-
 	// Rest countries API call for currency info for finance modal
 	let lat;
 	let lng;
@@ -353,14 +370,24 @@ $('#country-select').on('change', function () {
 			},
 			success: function (result) {
 				if (result.status.name == "ok") {
+					console.log(result)
 					// Rest countries outputs here 
 					lat = result.data.latlng[0];
 					lng = result.data.latlng[1];
 					resolve('foo');
-					$('#capital').html(result.data.capital);
 					$('#currencyName').html('1 ' + result.data.currencies[0].name);
 					$('#currencySymbol').html(result.data.currencies[0].symbol);
-					$('#infoBox').prepend('<img id="flag" src="' + result.data.flag + '">');
+					
+					if (result.data.alpha2Code == 'CH') {
+						$('#infoBox').prepend('<img id="flagCH" src="' + result.data.flag + '">');
+					} else if (result.data.alpha2Code == 'NP') {
+						$('#infoBox').prepend('<img id="flagNP" src="' + result.data.flag + '">');
+                    }
+					else {
+						$('#infoBox').prepend('<img id="flag" src="' + result.data.flag + '">');
+                    }
+					
+					
 				};
 			},
 			error: function (jqXHR, textStatus, errorThrown) {
@@ -386,42 +413,47 @@ $('#country-select').on('change', function () {
 				let data = result.data.query.pages[num]
 				for (let i = 0; i < data.images.length; i++) {
 					let title = data.images[i].title;
-					if (!title.includes('.svg') && !title.includes('.png') && !title.includes('.ogg')) {
+					if (title.includes('.jpg') || title.includes('.JPG') ) {
 						title = title.replace('File:', '');
 						title = title.replaceAll(' ', '_');
 						imageUrls.push(title);
 					}
 				}
+				if (imageUrls.length > 1) {
+					$('#carouselSlides').append('<a class="carousel-control-prev" href="#carouselCountry" role="button" data-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="sr-only">Previous</span></a><a class="carousel-control-next" href="#carouselCountry" role="button" data-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="sr-only">Next</span></a>')
+				}
 				for (let i = 0; i < imageUrls.length; i++) {
-					let image = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + imageUrls[i];
-					if (i == 0) {
-						$('#carouselSlides').append('<div id="item' + i + '"class= "carousel-item active" ><img class="d-block w-100" src="' + image + '" alt="Image"> </div>');
-					}
-					else {
-						$('#carouselSlides').append('<div id="item' + i + '"class= "carousel-item" ><img class="d-block w-100" src="' + image + '" alt="Image"  > </div>');
-					}
-					let encImage = encodeURIComponent(imageUrls[i]);
-					$.ajax({
-						url: "php/getWikiCaption.php",
-						type: 'POST',
-						dataType: 'json',
-						data: {
-							q: encImage
-						},
-						success: function (result) {
-							if (result.status.name == "ok") {
-								let num = Object.keys(result.data);
+				let image = 'https://commons.wikimedia.org/wiki/Special:FilePath/' + imageUrls[i];
+				if (i == 0) {
+					$('#carouselSlides').append('<div id="item' + i + '"class= "carousel-item active" ><img class="d-block w-100" src="' + image + '" alt="Image"> </div>');
+				}
+				else {
+					$('#carouselSlides').append('<div id="item' + i + '"class= "carousel-item" ><img class="d-block w-100" src="' + image + '" alt="Image"  > </div>');
+				}
+				let encImage = encodeURIComponent(imageUrls[i]);
+				$.ajax({
+					url: "php/getWikiCaption.php",
+					type: 'POST',
+					dataType: 'json',
+					data: {
+						q: encImage
+					},
+					success: function (result) {
+						if (result.status.name == "ok" && !result.data[-1]) {
+							let num = Object.keys(result.data);
+							if (result.data[num].imageinfo[0].extmetadata.ImageDescription) {
 								let longDesc = result.data[num].imageinfo[0].extmetadata.ImageDescription.value
 								let x = '#item' + i;
-								$(x).append('<figcaption >' + longDesc + '</figcaption><br>');
-							}
-						},
-						error: function (jqXHR, textStatus, errorThrown) {
-							let errorMessage = jqXHR.status + ': ' + jqXHR.statusText
-								console.log('Error - ' + errorMessage);
-						
+								$(x).append('<figcaption >' + longDesc + '</figcaption>');
+                            }
 						}
-					}); 
+					},
+					error: function (jqXHR, textStatus, errorThrown) {
+						let errorMessage = jqXHR.status + ': ' + jqXHR.statusText
+							console.log('Error - ' + errorMessage);
+						
+					}
+				}); 
 				}
 				
 			}
@@ -446,13 +478,35 @@ $('#country-select').on('change', function () {
 				let value = Object.keys(result.data); 
 				let summaryInit = result.data[value].extract;
 				let summary = summaryInit.replaceAll('. ', '. <br><br>');
-				$('#summary').html(summary); 
+				$('#summary').html('<br>' + summary); 
 			}
 		},
 		error: function (jqXHR, textStatus, errorThrown) {
 			console.log(textStatus);
 		}
 	}); 
+
+	// OpenCage Forward call for localtime for country info modal
+	$.ajax({
+		url: "php/getOpenCageF.php",
+		type: 'POST',
+		dataType: 'json',
+		data: {
+			cc: this.value,
+			q: encCountryKey
+		},
+		success: function (result) {
+			if (result.status.name == "ok") {
+				let dt = DateTime.fromObject({ zone: result.data[0].annotations.timezone.name })
+				let localTime = dt.toLocaleString(DateTime.DATETIME_MED)
+				let split = localTime.split(', ');
+				$('#localTime').html(split[2]);
+			}
+		},
+		error: function (jqXHR, textStatus, errorThrown) {
+			console.log(textStatus);
+		}
+	});
 
 	// get government info WikiApi for country info modal
 	let lowerCountry = countryKey.toLowerCase();
@@ -474,11 +528,14 @@ $('#country-select').on('change', function () {
 		case 'swaziland':
 			lowerCountry = 'eswatini'
 			break;
+		case 'bosnia_and_herzegovina':
+			lowerCountry = 'bosnia'
+			break;
 
 		default:
 			break;
 	}
-	$('#govCard').show();
+	
 	const settings = {
 		"async": true,
 		"crossDomain": true,
@@ -490,6 +547,7 @@ $('#country-select').on('change', function () {
 		}
 	};
 	$.ajax(settings).done(function (response) {
+		$('#govCard').show();
 		// country info modal, government card
 		if (response.government) {
 			$('#govRow').show();
@@ -553,9 +611,7 @@ $('#country-select').on('change', function () {
 		else {
 			$('#uHouseRow').hide();
 		}
-	}).fail(function () {
-		$('#govCard').hide();
-	});
+	})
 
 	// get population, health and finance info WolframAlpha API for country info modal and finance modal
 	$.ajax({
@@ -786,7 +842,7 @@ $('#country-select').on('change', function () {
 				$('#standardsRow').show();				
 				$('#newTotalRow').show();
 				$('#childLabourRow').show();
-				if (pods['Economic properties'] != undefined || pods['Business information'] != undefined || pods['Employment'] != undefined ) {
+				if (pods['Economic properties'] != undefined || pods['Business information'] != undefined || pods['Currency'] != undefined || pods['Employment'] != undefined ) {
 					// GDP card
 					if (pods['Economic properties'] != undefined) {
 						let economic = pods['Economic properties'].subpods[0].plaintext;
@@ -907,7 +963,16 @@ $('#country-select').on('change', function () {
 						}
 					} else {
 						$('#employmentCard').hide();
-                    }
+					}
+					if ($('#gdpCard').is(":hidden") && $('#currencyCard').is(":hidden") && $('#businessCard').is(":hidden")) {
+						$('#employmentCard').collapse('show'); 
+					} else if ($('#gdpCard').is(":hidden") && $('#employmentCard').is(":hidden") && $('#businessCard').is(":hidden")) {
+						$('#currencyCard').collapse('show');
+					} else if ($('#gdpCard').is(":hidden") && $('#employmentCard').is(":hidden") && $('#currencyCard').is(":hidden")) {
+						$('#businessCard').collapse('show');
+					} else if ($('#businessCard').is(":hidden") && $('#employmentCard').is(":hidden") && $('#currencyCard').is(":hidden")) {
+						$('#gdpCard').collapse('show');
+					}	
 				}
 				else {
 					finance.removeControl();
@@ -919,7 +984,7 @@ $('#country-select').on('change', function () {
 		}
 	}); 
 
-	// launch weather modal on click 
+	// launch weather modal on click
 	$('.weatherBox').click(function (event) {
 		$('#weatherModal').modal('toggle');
 		$('#spinner').show()
@@ -936,6 +1001,7 @@ $('#country-select').on('change', function () {
 				success: function (result) {
 					if (result.status.name == "ok") {
 						$('#spinner').hide();
+						$('#weatherBody').show();
 						//current
 						let temp = Math.round(result.data.current.temp);
 						let desc = result.data.current.weather[0].description[0].toUpperCase() + result.data.current.weather[0].description.slice(1);
@@ -963,7 +1029,7 @@ $('#country-select').on('change', function () {
 							let setHours = parseInt(sunset.substring(0, 2));
 							if (riseMins > setMins) {
 								setMins += 60;
-								setHours -= 1; 
+								setHours -= 1;
 							}
 							let diffMins = setMins - riseMins;
 							diffMins = '0' + diffMins.toString();
@@ -1022,7 +1088,7 @@ $('#country-select').on('change', function () {
 							$(hiId).html(high + '&deg');
 							$(lowId).html(low + '&deg');
 						}
-				};
+					};
 				},
 				error: function (jqXHR, textStatus, errorThrown) {
 				console.log(textStatus);
@@ -1043,64 +1109,69 @@ $('#country-select').on('change', function () {
 			},
 			success: function (result) {
 				if (result.status.name == "ok") {
-					console.log(result)
 					if (camCluster) {
 						map.removeLayer(camCluster);
 					}
 					for (i = 0; i < result.data.length; i++) {
-						// create city markers and put in array
-						let content = $('<div id="cam' + [i] +'"></div>');
-						content.html('<img id="webcamImg" src="' + result.data[i].image.daylight.preview + '" alt="Webcam image" style="width:100%"></div><b id="camTitle">' + result.data[i].title + '</b>'); 
-						obj = L.marker([result.data[i].location.latitude, result.data[i].location.longitude], {
-							icon: L.BeautifyIcon.icon({
-								icon: 'fas fa-video',
-								borderColor: 'rgba(255,255,255, 0.4)',
-								backgroundColor: 'rgba(3, 166, 120, 1)',
-								textColor: 'rgba(255,255,255, 1)'
+						if (result.data[i].id != 1436977359 && result.data[i].id != 1586813314 && result.data[i].id != 1551588161) {
+							// create webcam markers and put in array
+							let content = $('<div id="cam' + [i] + '"></div>');
+							content.html('<img id="webcamImg" src="' + result.data[i].image.daylight.preview + '" alt="Webcam image" style="width:100%"></div><b id="camTitle">' + result.data[i].title + '</b>');
+							obj = L.marker([result.data[i].location.latitude, result.data[i].location.longitude], {
+								icon: L.BeautifyIcon.icon({
+									icon: 'fas fa-video',
+									borderColor: 'rgba(255,255,255, 0.4)',
+									backgroundColor: 'rgba(3, 166, 120, 1)',
+									textColor: 'rgba(255,255,255, 1)'
+								})
 							})
-						})
-						.on('click', onCamClick);	
-						$('#webcamImg').css({ "display": "block", "opacity": "1", "object-fit": "cover", "border": "1px solid lightgrey", "margin-bottom": "5px", "border-radius": "4px" });
-						let stream = 'https://webcams.windy.com/webcams/stream/' + result.data[i].id;
+								.on('click', onCamClick);
+							$('#webcamImg').css({ "display": "block", "opacity": "1", "object-fit": "cover", "border": "1px solid lightgrey", "margin-bottom": "5px", "border-radius": "4px" });
+							let stream = 'https://webcams.windy.com/webcams/stream/' + result.data[i].id;
+							let title = result.data[i].title
+							function onCamClick(e) {
+								$('#webcamTitle').html(title);
+								$.ajax({
+									url: "php/getStream.php",
+									data: {
+										stream: stream
+									},
+									success: function (result) {
+										if (result.includes('video.cgi?')) {
+											let index = result.indexOf('.cgi?');
+											result = result.substring(0, index + 5)
+										}
+										if (result.includes('dropcam')) {
+											result = "";
+										}
+										if (result.includes('firefly')) {
+											result = "http://fireflyr.viewnetcam.com/SnapshotJPEG?Resolution=640x480&Quality=Clarity&Count=8";
+										}
+										if (result.includes('https')) {
+											$('#camURL').html('<iframe src="' + stream + '" frameBorder="0" scrolling="no"  height="330px" width="100%">Oops! This webcam is offline</iframe>');
+											$('#camsModal').modal('toggle');
+										} else {
+											window.open(result, "", "width=700,height=500");
+										}
+									},
+									error: function (jqXHR, textStatus, errorThrown) {
+										console.log(textStatus);
+									}
+								});
 
-						//linkToUrl.com/script.js
 
-						let title = result.data[i].title
-						function onCamClick(e) {
-							$('#webcamTitle').html(title);
-							$.ajax({
-								url: "php/getStream.php",
-								data: {
-									stream: stream
-								},
-								success: function (result) {
-									console.log(result)
-									if (result.includes('https')) {
-										$('#camURL').html('<iframe src="' + stream + '" frameBorder="0" scrolling="no"  height="330px" width="100%"></iframe>');
-										$('#camsModal').modal('toggle');
-									} else {
-										window.open(result, "", "width=700,height=500");
-                                    }
-										
-									
-								},
-								error: function (jqXHR, textStatus, errorThrown) {
-									console.log(textStatus);
-								}
-							}); 
-
-							
+							}
+							camArray.push(obj);
 						}
-						camArray.push(obj);
-						
 					}
-					
 					// creat cities cluster layer and put into easy button
-					cams = new L.layerGroup(camArray);
-					camCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-					camCluster.addLayer(cams);
-					camCluster.addTo(map);
-					addToBar(camCluster, 'camCluster');
+					if (result.data.length > 0) {
+						cams = new L.layerGroup(camArray);
+						camCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						camCluster.addLayer(cams);
+						camCluster.addTo(map);
+						addToBar(camCluster, 'camCluster');
+                    }
 					resolve('foo');
 				}
 			},
@@ -1109,8 +1180,6 @@ $('#country-select').on('change', function () {
 			}
 		});
 	});
-
-
 
 	// World geodata cities API and Wiki search API on popup click
 	let cityArray = [];
@@ -1194,6 +1263,7 @@ $('#country-select').on('change', function () {
 			resolve('foo');
 		})
 		.fail(function () {
+			setTimeout(function () {
 			$.ajax(settings2).done(function (response) {
 				if (cityCluster) {
 					map.removeLayer(cityCluster);
@@ -1252,6 +1322,7 @@ $('#country-select').on('change', function () {
 				addToBar(cityCluster, 'cityCluster');
 				resolve('foo');
 			})
+		}, 1000);	
 		});
 	});
 
@@ -1282,7 +1353,7 @@ $('#country-select').on('change', function () {
 					})
 						.bindPopup(content[0], {
 							maxWidth: "300px"
-						})
+						}).on('click', onCapitalClick);
 					let encCap = encodeURIComponent(result.data[0].name);
 					function onCapitalClick(e) {
 						$('#capImg').empty();
@@ -1315,6 +1386,7 @@ $('#country-select').on('change', function () {
 					resolve('foo');
 				}
 				else {
+					console.log("missing city")
 					resolve('foo');
                 }
 			},
@@ -1379,11 +1451,13 @@ $('#country-select').on('change', function () {
 		} 
 		airportArray.push(obj);
 	}	
-	let airportsLayer = new L.layerGroup(airportArray); 
-	airportCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-	airportCluster.addLayer(airportsLayer);
-	airportCluster.addTo(map);
-	addToBar(airportCluster, 'airportCluster');
+	if (airportArray.length > 0) {
+		let airportsLayer = new L.layerGroup(airportArray);
+		airportCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+		airportCluster.addLayer(airportsLayer);
+		airportCluster.addTo(map);
+		addToBar(airportCluster, 'airportCluster');
+	}
 
 	// Geonames API search train stations and Wiki API search on popup click
 	if (trainCluster) {
@@ -1447,11 +1521,12 @@ $('#country-select').on('change', function () {
 						};
 						trainArray.push(obj);
 					};
-					let trainLayer = new L.layerGroup(trainArray);
-					trainCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-					trainCluster.addLayer(trainLayer);
-					addToBar(trainCluster, "trainCluster");
-					trainCluster.addTo(map);
+					if (result.data.length > 0) {
+						let trainLayer = new L.layerGroup(trainArray);
+						trainCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						trainCluster.addLayer(trainLayer);
+						addToBar(trainCluster, "trainCluster");
+					}
 					resolve('foo');
 				};
 			},
@@ -1523,11 +1598,12 @@ $('#country-select').on('change', function () {
 						};
 						metroArray.push(obj);
 					};
-					let metroLayer = new L.layerGroup(metroArray);
-					metroCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-					metroCluster.addLayer(metroLayer);
-					addToBar(metroCluster, "metroCluster");
-					metroCluster.addTo(map);
+					if (result.data.length > 0) {
+						let metroLayer = new L.layerGroup(metroArray);
+						metroCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						metroCluster.addLayer(metroLayer);
+						addToBar(metroCluster, "metroCluster");
+					}
 					resolve('foo');
 				};
 			},
@@ -1599,11 +1675,12 @@ $('#country-select').on('change', function () {
 						};
 						busArray.push(obj);
 					};
-					let busLayer = new L.layerGroup(busArray);
-					busCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-					busCluster.addLayer(busLayer);
-					addToBar(busCluster, "busCluster");
-					busCluster.addTo(map);
+					if (result.data.length > 0) {
+						let busLayer = new L.layerGroup(busArray);
+						busCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						busCluster.addLayer(busLayer);
+						addToBar(busCluster, "busCluster");
+					}
 					resolve('foo');
 				};
 			},
@@ -1676,11 +1753,12 @@ $('#country-select').on('change', function () {
 						};
 						libArray.push(obj);
 					}
-					let libLayer = new L.layerGroup(libArray);
-					libCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-					libCluster.addLayer(libLayer);
-					addToBar(libCluster, 'libCluster');
-					libCluster.addTo(map);
+					if (result.data.length > 0) {
+						let libLayer = new L.layerGroup(libArray);
+						libCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						libCluster.addLayer(libLayer);
+						addToBar(libCluster, 'libCluster');
+					}
 					resolve('foo');
 				}			
 			},
@@ -1753,11 +1831,12 @@ $('#country-select').on('change', function () {
 						};
 						thrArray.push(obj);
 					}
-					let thrLayer = new L.layerGroup(thrArray);
-					thrCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-					thrCluster.addLayer(thrLayer);
-					addToBar(thrCluster, 'thrCluster');
-					thrCluster.addTo(map);
+					if (result.data.length > 0) {
+						let thrLayer = new L.layerGroup(thrArray);
+						thrCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						thrCluster.addLayer(thrLayer);
+						addToBar(thrCluster, 'thrCluster');
+					}
 					resolve('foo');
 				}
 			},
@@ -1829,11 +1908,13 @@ $('#country-select').on('change', function () {
 						};
 						hospArray.push(obj);
 					}
-					let hospLayer = new L.layerGroup(hospArray);
-					hospCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-					hospCluster.addLayer(hospLayer);
-					addToBar(hospCluster, 'hospCluster');
-					hospCluster.addTo(map);
+					if (result.data.length > 0) {
+						let hospLayer = new L.layerGroup(hospArray);
+						hospCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						hospCluster.addLayer(hospLayer);
+						addToBar(hospCluster, 'hospCluster');
+						hospCluster.addTo(map);
+					}
 					resolve('foo');
 				}
 			},
@@ -1905,11 +1986,12 @@ $('#country-select').on('change', function () {
 						};
 						musArray.push(obj);
 					}
-					let musLayer = new L.layerGroup(musArray);
-					musCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-					musCluster.addLayer(musLayer);
-					addToBar(musCluster, 'musCluster');
-					musCluster.addTo(map);
+					if (result.data.length > 0) {
+						let musLayer = new L.layerGroup(musArray);
+						musCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						musCluster.addLayer(musLayer);
+						addToBar(musCluster, 'musCluster');
+					}
 					resolve('foo');
 				}
 			},
@@ -1981,11 +2063,12 @@ $('#country-select').on('change', function () {
 						};
 						uniArray.push(obj);
 					};
-					let uniLayer = new L.layerGroup(uniArray);
-					uniCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-					uniCluster.addLayer(uniLayer);
-					addToBar(uniCluster, "uniCluster");
-					uniCluster.addTo(map);
+					if (result.data.length > 0) {
+						let uniLayer = new L.layerGroup(uniArray);
+						uniCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						uniCluster.addLayer(uniLayer);
+						addToBar(uniCluster, "uniCluster");
+                    }
 					resolve('foo');
 				};
 			},
@@ -1995,57 +2078,61 @@ $('#country-select').on('change', function () {
 		});
 	});
 
-	// function to add buttons to array (escape scope)
+	addToBar(clouds, "clouds");
+	addToBar(rain, "rain");
+	addToBar(snow, "snow");
+
+	// function to add clusters to array (escape scope)
 	function addToBar(x, y) {
 		toggleArray[y] = x;
 	}
-
-	// once all buttons completed, add to a bar and display on map
+	// once all clusters completed, add to control and display on map
 	Promise.all([libPromise, camsPromise, citiesPromise, capitalPromise, hospPromise, musPromise, thrPromise, uniPromise, trainPromise, metroPromise, busPromise]).then((values) => {
-		let overlayMaps = {};
-		if (toggleArray['capitalObj']) {
-			overlayMaps = {
-				"<span class='city-layer-item'>Capital city</span>": toggleArray['capitalObj'],
-				"Major cities": toggleArray['cityCluster'],
-				"Hospitals": toggleArray['hospCluster'],
-				"Univerisities": toggleArray['uniCluster'],
-				"Libraries": toggleArray['libCluster'],
-				"Museums": toggleArray['musCluster'],
-				"Theatres": toggleArray['thrCluster'],
-				"<span class='transport-layer-item'>Airports</span>": toggleArray['airportCluster'],
-				"Train stations": toggleArray['trainCluster'],
-				"Metro stations": toggleArray['metroCluster'],
-				"Bus stations": toggleArray['busCluster'],
-				"<span class='webcams-layer-item'>Live webcams</span>": toggleArray['camCluster'],
-				"<span class='clouds-layer-item'>Clouds</span>": clouds,
-				"Rain": rain,
-				"Snow": snow,
-			};
-		}
-		else {
-			overlayMaps = {
-				"<span class='city-layer-item'>Major cities</span>": toggleArray['cityCluster'],
-				"Hospitals": toggleArray['hospCluster'],
-				"Univerisities": toggleArray['uniCluster'],
-				"Libraries": toggleArray['libCluster'],
-				"Museums": toggleArray['musCluster'],
-				"Theatres": toggleArray['thrCluster'],
-				"<span class='transport-layer-item'>Airports</span>": toggleArray['airportCluster'],
-				"Train stations": toggleArray['trainCluster'],
-				"Metro stations": toggleArray['metroCluster'],
-				"Bus stations": toggleArray['busCluster'],
-				"<span class='webcams-layer-item'>Live webcams</span>": toggleArray['camCluster'],
-				"<span class='clouds-layer-item'>Clouds</span>": clouds,
-				"Rain": rain,
-				"Snow": snow,
-			};
-        }
+		let overlayMaps = {"<span class='city-layer-item'>Capital city</span>": toggleArray['capitalObj'] }
 		let overlays = L.control.layers({}, overlayMaps).addTo(map);
-		$('.city-layer-item').parent().parent().prepend('<b>Places:</b><br>');
+		if (toggleArray['cityCluster']) {
+			overlays.addOverlay(toggleArray['cityCluster'],"Major cities" ) 
+		}
+		if (toggleArray['hospCluster']) {
+			overlays.addOverlay(toggleArray['hospCluster'], "Hospitals")
+		}
+		if (toggleArray['uniCluster']) {
+			overlays.addOverlay(toggleArray['uniCluster'], "Univerisities")
+		}
+		if (toggleArray['libCluster']) {
+			overlays.addOverlay(toggleArray['libCluster'], "Libraries")
+		}
+		if (toggleArray['musCluster']) {
+			overlays.addOverlay(toggleArray['musCluster'], "Museums")
+		}
+		if (toggleArray['thrCluster']) {
+			overlays.addOverlay(toggleArray['thrCluster'], "Theatres")
+		}
+		if (toggleArray['airportCluster']) {
+			overlays.addOverlay(toggleArray['airportCluster'], "<span class='transport-layer-item'>Airports</span>")
+		}
+		if (toggleArray['trainCluster']) {
+			overlays.addOverlay(toggleArray['trainCluster'], "Train stations")
+		}
+		if (toggleArray['metroCluster']) {
+			overlays.addOverlay(toggleArray['metroCluster'], "Metro stations")
+		}
+		if (toggleArray['busCluster']) {
+			overlays.addOverlay(toggleArray['busCluster'], "Bus stations")
+		}
+		if (toggleArray['camCluster']) {
+			overlays.addOverlay(toggleArray['camCluster'], "<span class='webcams-layer-item'>Live webcams</span>")
+		}
+		overlays.addOverlay(toggleArray['clouds'], "<span class='clouds-layer-item'>Clouds</span>");
+		overlays.addOverlay(toggleArray['rain'], "Rain")
+		overlays.addOverlay(toggleArray['snow'], "Snow")
+		
+		$('.city-layer-item').parent().parent().prepend('<b>Places:</b ><br>');
 		$('.transport-layer-item').parent().parent().prepend('<b>Transport:</b><br>');
 		$('.webcams-layer-item').parent().parent().prepend('<b>Webcams:</b><br>');
 		$('.clouds-layer-item').parent().parent().prepend('<b>Weather:</b><br>')
 		$('#spinner').hide();
 	});	
+	
 
 });

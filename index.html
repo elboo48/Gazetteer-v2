@@ -38,7 +38,7 @@
                     <p class="modal-title"><i class="fas fa-clock"></i> <span id="localTime"></span></p>
                 </div>
                 <div id="accordionCountry">
-                    <div class="card">
+                    <div class="card" id="govCard">
                         <div class="card-header" id="headingOne">
                             <h5 class="mb-0" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                                 Government
@@ -190,14 +190,6 @@
                 <div class="modal-body">
                     <div id="carouselCountry" class="carousel slide" data-ride="carousel" data-interval="5000">
                         <div class="carousel-inner" id="carouselSlides"></div>
-                        <a class="carousel-control-prev" href="#carouselCountry" role="button" data-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="sr-only">Previous</span>
-                        </a>
-                        <a class="carousel-control-next" href="#carouselCountry" role="button" data-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="sr-only">Next</span>
-                        </a>
                     </div>
                     <p><span id="summary"></span></p>
                 </div>
@@ -212,85 +204,72 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <div id="currentRow" class="row d-flex justify-content-between no-gutters">
-                        <div class="col-md-4" id="wIconDiv"></div>
-                        <div class="col-md-4">
-                            <div class="h50"><span id="countryTemp" scope="row"></span></div>
-                            <div class="h50"><span id="wDesc" scope="row"></span></div>
+                    <div id="weatherBody">
+                        <div id="currentRow" class="row d-flex justify-content-between align-items-center no-gutters">
+                            <div class="col-md-4 h50 wHead" id="wIconDiv"></div>
+                            <div class="col-md-4 wHead" >
+                                <div class="h50"><span id="countryTemp" scope="row">&deg;</span></div>
+                                <div class="h50"><span id="wDesc" scope="row"></span></div>
+                            </div>
+                            <div class="col-md-4 wHead" >
+                                <div class="h50"><span id="high" scope="row"></span></div>
+                                <div class="h50"><span id="low" scope="row"></span></div>
+                            </div>
                         </div>
-                        <div class="col-md-4 ">
-                            <div class="h50"><span id="high" scope="row"></span></div>
-                            <div class="h50"><span id="low" scope="row"></span></div>
+                        <div id="sunriseRow" class="d-flex justify-content-between row align-items-center no-gutters">
+                            <div class="col-md-3 h50">
+                                <img id="sunUpImg" src="css\images\sunup.png" />
+                                <span id="sunrise"></span>
+                            </div>
+                            <div class="col-md-3 h50">
+                                <img id="sunDownImg" src="css\images\sundown.png" />
+                                <span id="sunset"></span>
+                            </div>
+                            <div class="col-md-3 h50">
+                                <img id="daylightImg" src="css\images\sunhours2.png" />
+                                <span id="daylight"></span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped text-nowrap">
+                                <tr id="daily1">
+                                    <td class="align-middle" scope="row"><span id="d1Day"></span></td>
+                                    <td class="align-middle" scope="row" ><span id="d1Icon"></span>&nbsp;<span id="d1Rain" class="rain"></span></td>
+                                    <td class="align-middle" scope="row"><span class="float-right"><span id="d1Hi"></span>&nbsp;<span id="d1Low" class="low"></span></span></td>
+                                </tr>
+                                <tr id="daily2">
+                                    <td class="align-middle" scope="row"><span id="d2Day"></span></td>
+                                    <td class="align-middle" scope="row"><span id="d2Icon"></span>&nbsp;<span id="d2Rain" class="rain"></span></td>
+                                    <td class="align-middle" scope="row"><span class="float-right"><span id="d2Hi"></span>&nbsp;<span id="d2Low" class="low"></span></span></td>
+                                </tr>
+                                <tr id="daily3">
+                                    <td class="align-middle" scope="row"><span id="d3Day"></span></td>
+                                    <td class="align-middle" scope="row"><span id="d3Icon"></span>&nbsp;<span id="d3Rain" class="rain"></span></td>
+                                    <td class="align-middle" scope="row"><span class="float-right"><span id="d3Hi"></span>&nbsp;<span id="d3Low" class="low"></span></span></td>
+                                </tr>
+                                <tr id="daily4">
+                                    <td class="align-middle" scope="row"><span id="d4Day"></span></td>
+                                    <td class="align-middle" scope="row"><span id="d4Icon"></span>&nbsp;<span id="d4Rain" class="rain"></span></td>
+                                    <td class="align-middle" scope="row"><span class="float-right"><span id="d4Hi"></span>&nbsp;<span id="d4Low" class="low"></span></span></td>
+                                </tr>
+                                <tr id="daily5">
+                                    <td class="align-middle" scope="row"><span id="d5Day"></span></td>
+                                    <td class="align-middle" scope="row"><span id="d5Icon"></span>&nbsp;<span id="d5Rain" class="rain"></span></td>
+                                    <td class="align-middle" scope="row"><span class="float-right"><span id="d5Hi"></span>&nbsp;<span id="d5Low" class="low"></span></span></td>
+                                </tr>
+                                <tr id="daily6">
+                                    <td class="align-middle" scope="row"><span id="d6Day"></span></td>
+                                    <td class="align-middle" scope="row"><span id="d6Icon"></span>&nbsp;<span id="d6Rain" class="rain"></span></td>
+                                    <td class="align-middle" scope="row"><span class="float-right"><span id="d6Hi"></span>&nbsp;<span id="d6Low" class="low"></span></span></td>
+                                </tr>
+                                <tr id="daily7">
+                                    <td class="align-middle" scope="row"><span id="d7Day"></span></td>
+                                    <td class="align-middle" scope="row"><span id="d7Icon"></span>&nbsp;<span id="d7Rain" class="rain"></span></td>
+                                    <td class="align-middle" scope="row"><span class="float-right"><span id="d7Hi"></span>&nbsp;<span id="d7Low" class="low"></span></span></td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
-                    <div id="sunriseRow" class="d-flex justify-content-between row align-items-center no-gutters">
-                        <div class="col-md-3 h50">
-                            <img id="sunUpImg" src="css\images\sunup.png" />
-                            <span id="sunrise"></span>
-                        </div>
-                        <div class="col-md-3 h50">
-                            <img id="sunDownImg" src="css\images\sundown.png" />
-                            <span id="sunset"></span>
-                        </div>
-                        <div class="col-md-3 h50">
-                            <img id="daylightImg" src="css\images\sunhours2.png" />
-                            <span id="daylight"></span>
-                        </div>
-                    </div>
-                    <div class="row no-gutters">
-                        <table class="table table-striped">
-                            <tr id="daily1">
-                                <td class="align-middle" scope="row"><span id="d1Day"></span></td>
-                                <td class="align-middle" scope="row" id="d1Icon"></td>
-                                <td class="align-middle" scope="row"><span id="d1Rain"></span></td>
-                                <td class="align-middle" scope="row"><span id="d1Hi" class="float-right"></span></td>
-                                <td class="align-middle"><span id="d1Low" class="float-right"></span>
-                            </tr>
-                            <tr id="daily2">
-                                <td class="align-middle" scope="row"><span id="d2Day"></span></td>
-                                <td class="align-middle" scope="row" id="d2Icon"></td>
-                                <td class="align-middle" scope="row"><span id="d2Rain"></span></td>
-                                <td class="align-middle" scope="row"><span id="d2Hi" class="float-right"></span></td>
-                                <td class="align-middle"><span id="d2Low" class="float-right"></span></td>
-                            </tr>
-                            <tr id="daily3">
-                                <td class="align-middle" scope="row"><span id="d3Day"></span></td>
-                                <td class="align-middle" scope="row" id="d3Icon"></td>
-                                <td class="align-middle" scope="row"><span id="d3Rain"></span></td>
-                                <td class="align-middle" scope="row"><span id="d3Hi" class="float-right"></span></td>
-                                <td class="align-middle"><span id="d3Low" class="float-right"></span></td>
-                            </tr>
-                            <tr id="daily4">
-                                <td class="align-middle" scope="row"><span id="d4Day"></span></td>
-                                <td class="align-middle" scope="row" id="d4Icon"></td>
-                                <td class="align-middle" scope="row"><span id="d4Rain"></span></td>
-                                <td class="align-middle" scope="row"><span id="d4Hi" class="float-right"></span></td>
-                                <td class="align-middle"><span id="d4Low" class="float-right"></span></td>
-                            </tr>
-                            <tr id="daily5">
-                                <td class="align-middle" scope="row"><span id="d5Day"></span></td>
-                                <td class="align-middle" scope="row" id="d5Icon"></td>
-                                <td class="align-middle" scope="row"><span id="d5Rain"></span></td>
-                                <td class="align-middle" scope="row"><span id="d5Hi" class="float-right"></span></td>
-                                <td class="align-middle"><span id="d5Low" class="float-right"></span></td>
-                            </tr>
-                            <tr id="daily6">
-                                <td class="align-middle" scope="row"><span id="d6Day"></span></td>
-                                <td class="align-middle" scope="row" id="d6Icon"></td>
-                                <td class="align-middle" scope="row"><span id="d6Rain"></span></td>
-                                <td class="align-middle" scope="row"><span id="d6Hi" class="float-right"></span></td>
-                                <td class="align-middle"><span id="d6Low" class="float-right"></span></td>
-                            </tr>
-                            <tr id="daily7">
-                                <td class="align-middle" scope="row"><span id="d7Day"></span></td>
-                                <td class="align-middle" scope="row" id="d7Icon"></td>
-                                <td class="align-middle" scope="row"><span id="d7Rain"></span></td>
-                                <td class="align-middle" scope="row"><span id="d7Hi" class="float-right"></span></td>
-                                <td class="align-middle"><span id="d7Low" class="float-right"></span></td>
-                            </tr>
-                        </table>
-                    </div>
-
                 </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
@@ -443,7 +422,6 @@
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
-
     <div id="financeModal" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -463,7 +441,7 @@
                             <table class="table ">
                                 <tr>
                                     <td scope="row"><i class="fas fa-piggy-bank"></i></td>
-                                    <td>Gross Domestic Product (USD)</td>
+                                    <td>GDP (USD)</td>
                                     <td><span id="gdp" class="float-right"></span></td>
                                 </tr>
                                 <tr>
@@ -552,6 +530,8 @@
                             </table>
                         </div>
                     </div>
+                </div>
+                <div class="modal-body">
                 </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
