@@ -360,6 +360,7 @@ $('#country-select').on('change', function () {
 	// Rest countries API call for currency info for finance modal
 	let lat;
 	let lng;
+	let capital; 
 	let latLngPromise = new Promise((resolve, reject) => {
 		$.ajax({
 			url: "php/getRest.php",
@@ -370,8 +371,11 @@ $('#country-select').on('change', function () {
 			},
 			success: function (result) {
 				if (result.status.name == "ok") {
-					console.log(result)
 					// Rest countries outputs here 
+					capital = result.data.capital;
+					if (capital.includes("El Aai" )) {
+						capital = 'Laayoune';
+					}
 					lat = result.data.latlng[0];
 					lng = result.data.latlng[1];
 					resolve('foo');
@@ -1181,34 +1185,131 @@ $('#country-select').on('change', function () {
 		});
 	});
 
+
+	//  Geonames API search capital city and Wiki API search on popup click
+	let capitalPromise = new Promise((resolve, reject) => {
+		$.ajax({
+			url: "php/getAmenities.php",
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				q: encCountryKey,
+				cc: this.value,
+				fc: 'PPLC',
+			},
+			success: function (result) {
+				if (result.status.name == "ok") {
+					let name;
+					let pop;
+					let lat;
+					let lng;
+					let lostCapitalPromise = new Promise((resolve, reject) => {
+						if (result.data.length == 0) {
+						latLngPromise.then(value => { 
+							let encCap = encodeURIComponent(capital);
+							console.log(encCap)
+							$.ajax({
+								url: "php/getCapital.php",
+								type: 'POST',
+								dataType: 'json',
+								data: {
+									q: encCap,
+								},
+								success: function (result) {
+									console.log(result)
+									name = result.data.parameters.q
+									lat = result.data.records[0].fields.latitude
+									lng = result.data.records[0].fields.longitude
+									resolve('foo');
+								},
+								error: function (jqXHR, textStatus, errorThrown) {
+									let errorMessage = jqXHR.status + ': ' + jqXHR.statusText + ': ' + jqXHR.responseText
+									console.log('Error - ' + errorMessage);
+								}
+							})
+						}, reason => {
+							console.error(reason);
+						});
+						} else {
+							capital = result.data[0].name;
+							pop = numberWithCommas(result.data[0].population);
+							name = result.data[0].name
+							lat = result.data[0].lat
+							lng = result.data[0].lng
+							resolve('foo');
+							}
+					});	
+					lostCapitalPromise.then(value => {
+						if (capital == "Laayoune") {
+						pop = '217,732';
+                    }
+					let content = $('<div id="cap" />');
+					content.html(
+						'<div id="capImgDiv"/></div><b id="capURL">' + name + '</b><br>Population: ' + pop);
+					let capitalObj = L.marker([lat, lng], {
+						icon: L.BeautifyIcon.icon({
+							icon: 'fas fa-city',
+							borderColor: 'rgba(255,255,255, 0.4)',
+							backgroundColor: 'rgba(48, 131, 220, 1)',
+							textColor: 'rgba(255,255,255, 1)'
+						})
+					})
+						.bindPopup(content[0], {
+							maxWidth: "300px"
+						}).on('click', onCapitalClick);
+					let encCap = encodeURIComponent(name);
+					function onCapitalClick(e) {
+						$('#capImg').empty();
+						$.ajax({
+							url: "php/getWiki.php",
+							type: 'POST',
+							dataType: 'json',
+							data: {
+								q: encCap,
+								title: encCap
+							},
+							success: function (result) {
+								if (result.status.name == "ok") {
+									if (result.data.length != 0) {
+										console.log(result);
+										if (result.data[0].wikipediaUrl) {
+											$('#capURL').wrap('<a href="https://' + result.data[0].wikipediaUrl + '" target= _blank >');
+                                        }
+										if (result.data[0].thumbnailImg) {
+											$('#capImgDiv').prepend('<img id="capImg" src="' + result.data[0].thumbnailImg + '" alt="Capital city image" style="width:100%">');
+											$('#capImg').css({ "display": "block", "opacity": "1", "object-fit": "cover", "border": "1px solid lightgrey", "margin-bottom": "5px", "border-radius": "4px" });
+										}
+									};
+								};
+							},
+							error: function (jqXHR, textStatus, errorThrown) {
+								console.log(textStatus);
+							}
+						});
+					};
+					capitalObj.addTo(map);
+					addToBar(capitalObj, "capitalObj");
+					resolve('foo');
+                    })
+
+					
+
+
+                }
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				let errorMessage = jqXHR.status + ': ' + jqXHR.statusText + ': ' + jqXHR.responseText
+				console.log('Error - ' + errorMessage);
+			}
+		});
+	});
+
 	// World geodata cities API and Wiki search API on popup click
 	let cityArray = [];
-	let citiesPromise = new Promise((resolve, reject) => {
-		const settings = {
-			"async": true,
-			"crossDomain": true,
-			"url": "https://world-geo-data.p.rapidapi.com/countries/" + this.value + "/cities?format=json&language=en&min_population=100000",
-			"method": "GET",
-			"headers": {
-				"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
-				"x-rapidapi-host": "world-geo-data.p.rapidapi.com"
-			}
-		};
-		const settings2 = {
-			"async": true,
-			"crossDomain": true,
-			"url": "https://world-geo-data.p.rapidapi.com/countries/" + this.value + "/cities?format=json&language=en&min_population=1000",
-			"method": "GET",
-			"headers": {
-				"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
-				"x-rapidapi-host": "world-geo-data.p.rapidapi.com"
-			}
-		};
-		$.ajax(settings).done(function (response) {
-			if (cityCluster) {
-				map.removeLayer(cityCluster);
-			}
-			for (i = 0; i < response.cities.length; i++) {
+	function cityDoStuff(response) {
+		for (i = 0; i < response.cities.length; i++) {
+			if (capital !== response.cities[i].name) {
+				console.log(response.cities[i].name)
 				let pop = numberWithCommas(response.cities[i].population);
 				// create city markers and put in array
 				let content = $('<div id="wiki" />');
@@ -1221,10 +1322,10 @@ $('#country-select').on('change', function () {
 						textColor: 'rgba(255,255,255, 1)'
 					})
 				})
-				.bindPopup(content[0], {
-					maxWidth: "300px"
-				})
-				.on('click', onCityClick);
+					.bindPopup(content[0], {
+						maxWidth: "300px"
+					})
+					.on('click', onCityClick);
 				// Wiki API call on city popup click
 				let encCities = encodeURIComponent(response.cities[i].name);
 				function onCityClick(e) {
@@ -1250,70 +1351,64 @@ $('#country-select').on('change', function () {
 							console.log(textStatus);
 						}
 					});
-				}; 
+				};
 				obj.bindPopup(content[0]);
 				cityArray.push(obj);
-			} 
-			// creat cities cluster layer and put into easy button
-			cities = new L.layerGroup(cityArray);
-			cityCluster = L.markerClusterGroup({ showCoverageOnHover: false });
-			cityCluster.addLayer(cities);
-			cityCluster.addTo(map);
-			addToBar(cityCluster, 'cityCluster');
-			resolve('foo');
-		})
-		.fail(function () {
-			setTimeout(function () {
-			$.ajax(settings2).done(function (response) {
+			} else {
+				console.log(response.cities[i].name)
+				response.cities.splice(i, 1)
+			}
+		}
+	}
+
+	let citiesPromise = new Promise((resolve, reject) => {
+		const settings = {
+			"async": true,
+			"crossDomain": true,
+			"url": "https://world-geo-data.p.rapidapi.com/countries/" + this.value + "/cities?format=json&language=en&min_population=100000",
+			"method": "GET",
+			"headers": {
+				"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
+				"x-rapidapi-host": "world-geo-data.p.rapidapi.com"
+			}
+		};
+		const settings2 = {
+			"async": true,
+			"crossDomain": true,
+			"url": "https://world-geo-data.p.rapidapi.com/countries/" + this.value + "/cities?format=json&language=en&min_population=1000",
+			"method": "GET",
+			"headers": {
+				"x-rapidapi-key": "6163ffc988msh241283aa44b8848p1ffaa1jsne4692527d1c3",
+				"x-rapidapi-host": "world-geo-data.p.rapidapi.com"
+			}
+		};
+		capitalPromise.then(value => {
+			function runCitiesLower() {
+				setTimeout(function () {
+					$.ajax(settings2).done(function (response) {
+						console.log(response)
+						if (cityCluster) {
+							map.removeLayer(cityCluster);
+						}
+						cityDoStuff(response)
+						cities = new L.layerGroup(cityArray);
+						cityCluster = L.markerClusterGroup({ showCoverageOnHover: false });
+						cityCluster.addLayer(cities);
+						cityCluster.addTo(map);
+						addToBar(cityCluster, 'cityCluster');
+						resolve('foo');
+					})
+					}, 1500);	
+			};
+			$.ajax(settings).done(function (response) {
 				if (cityCluster) {
 					map.removeLayer(cityCluster);
 				}
-				for (i = 0; i < response.cities.length; i++) {
-					let pop = numberWithCommas(response.cities[i].population);
-					// create city markers and put in array
-					let content = $('<div id="wiki" />');
-					content.html('<div id="wikiImg"/></div><b id="wikiURL">' + response.cities[i].name + '</b><br>Population: ' + pop);
-					obj = L.marker([response.cities[i].latitude, response.cities[i].longitude], {
-						icon: L.BeautifyIcon.icon({
-							icon: 'fas fa-city',
-							borderColor: 'rgba(255,255,255, 0.4)',
-							backgroundColor: 'rgba(48, 131, 220, 1)',
-							textColor: 'rgba(255,255,255, 1)'
-						})
-					})
-						.bindPopup(content[0], {
-							maxWidth: "300px"
-						})
-						.on('click', onCityClick);
-					// Wiki API call on city popup click
-					let encCities = encodeURIComponent(response.cities[i].name);
-					function onCityClick(e) {
-						$('#wikiImg').empty();
-						$.ajax({
-							url: "php/getWiki.php",
-							type: 'POST',
-							dataType: 'json',
-							data: {
-								q: encCities,
-								title: encCities
-							},
-							success: function (result) {
-								if (result.status.name == "ok") {
-									$('#wikiURL').wrap('<a href="https://' + result.data[0].wikipediaUrl + '" target= _blank >');
-									if (result.data[0].thumbnailImg) {
-										$('#wikiImg').prepend('<img id="cityImg" src="' + result.data[0].thumbnailImg + '" alt="City image" style="width:100%">');
-										$('#cityImg').css({ "display": "block", "opacity": "1", "object-fit": "cover", "border": "1px solid lightgrey", "margin-bottom": "5px", "border-radius": "4px" });
-									};
-								};
-							},
-							error: function (jqXHR, textStatus, errorThrown) {
-								console.log(textStatus);
-							}
-						});
-					};
-					obj.bindPopup(content[0]);
-					cityArray.push(obj);
-				}
+				cityDoStuff(response)
+				if (response.cities == 0) {
+					runCitiesLower();
+					console.log('zero')
+				} else {
 				// creat cities cluster layer and put into easy button
 				cities = new L.layerGroup(cityArray);
 				cityCluster = L.markerClusterGroup({ showCoverageOnHover: false });
@@ -1321,81 +1416,17 @@ $('#country-select').on('change', function () {
 				cityCluster.addTo(map);
 				addToBar(cityCluster, 'cityCluster');
 				resolve('foo');
+                }				
 			})
-		}, 1000);	
-		});
+			.fail(function () {
+				runCitiesLower();
+				console.log('fail')
+			});
+		});	
+	}, reason => {
+			console.error(reason); 
 	});
-
-	//  Geonames API search capital city and Wiki API search on popup click
-	let capitalPromise = new Promise((resolve, reject) => {
-		$.ajax({
-			url: "php/getAmenities.php",
-			type: 'POST',
-			dataType: 'json',
-			data: {
-				q: encCountryKey,
-				cc: this.value,
-				fc: 'PPLC',
-			},
-			success: function (result) {
-				if (result.status.name == "ok" && result.data.length > 0) {
-					let pop = numberWithCommas(result.data[0].population);
-					let content = $('<div id="cap" />');
-					content.html(
-						'<div id="capImgDiv"/></div><b id="capURL">' + result.data[0].name + '</b><br>Population: ' + pop);
-					let capitalObj = L.marker([result.data[0].lat, result.data[0].lng], {
-						icon: L.BeautifyIcon.icon({
-							icon: 'fas fa-city',
-							borderColor: 'rgba(255,255,255, 0.4)',
-							backgroundColor: 'rgba(48, 131, 220, 1)',
-							textColor: 'rgba(255,255,255, 1)'
-						})
-					})
-						.bindPopup(content[0], {
-							maxWidth: "300px"
-						}).on('click', onCapitalClick);
-					let encCap = encodeURIComponent(result.data[0].name);
-					function onCapitalClick(e) {
-						$('#capImg').empty();
-						$.ajax({
-							url: "php/getWiki.php",
-							type: 'POST',
-							dataType: 'json',
-							data: {
-								q: encCap,
-								title: encCap
-							},
-							success: function (result) {
-								if (result.status.name == "ok") {
-									if (result.data.length != 0) {
-										$('#capURL').wrap('<a href="https://' + result.data[0].wikipediaUrl + '" target= _blank >');
-										if (result.data[0].thumbnailImg) {
-											$('#capImgDiv').prepend('<img id="capImg" src="' + result.data[0].thumbnailImg + '" alt="Capital city image" style="width:100%">');
-											$('#capImg').css({ "display": "block", "opacity": "1", "object-fit": "cover", "border": "1px solid lightgrey", "margin-bottom": "5px", "border-radius": "4px" });
-										}
-									};
-								};
-							},
-							error: function (jqXHR, textStatus, errorThrown) {
-								console.log(textStatus);
-							}
-						});
-					};
-					capitalObj.addTo(map);
-					addToBar(capitalObj, "capitalObj");
-					resolve('foo');
-				}
-				else {
-					console.log("missing city")
-					resolve('foo');
-                }
-			},
-			error: function (jqXHR, textStatus, errorThrown) {
-				console.log(textStatus);
-			}
-		});
-	});
-
+	
 	// major airports json and Wiki airports info API on popup click
 	if (airportCluster) {
 		map.removeLayer(airportCluster);
